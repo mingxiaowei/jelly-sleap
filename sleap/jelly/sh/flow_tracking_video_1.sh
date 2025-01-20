@@ -19,7 +19,7 @@ sleap-track $PREDICTION_PATH \
     --video.input_format channels_last \
     --batch_size 4 \
     --tracking.max_tracking 1 \
-    --tracking.tracker simplemaxtracks \
+    --tracking.tracker flowmaxtracks \
     --tracking.max_tracks 17 \
     --tracking.similarity centroid \
     --tracking.match hungarian \
