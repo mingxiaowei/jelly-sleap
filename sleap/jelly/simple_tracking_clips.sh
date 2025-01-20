@@ -1,7 +1,7 @@
 #bin/bash
 cd /home/mingxiao/Desktop/jellyfish/
 PREDICTION_FOLDER="video/video_1_clips/predictions/"
-OUTPUT_FOLDER="video/video_1_clips/predictions/simple-tracking"
+OUTPUT_FOLDER="video/video_1_clips/predictions/simple-tracking/"
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
     mkdir -p "$OUTPUT_FOLDER"
@@ -15,14 +15,14 @@ do
         -o $OUTPUT_PATH \
         --video.index 0 \
         --video.input_format channels_last \
-        --frames 0,-886 \
+        # --frames 0,-886 \
         --batch_size 4 \
         --tracking.tracker simple \
         --tracking.similarity centroid \
         --tracking.match hungarian \
         --tracking.track_window 5 \
         # --tracking.oks_errors \
-        --tracking.oks_score_weighting 0 \
+        # --tracking.oks_score_weighting 0 \
         --tracking.post_connect_single_breaks 0 \
         --verbosity json \
         --no-empty-frames
