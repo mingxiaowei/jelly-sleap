@@ -1,13 +1,13 @@
 #bin/bash
 cd /home/mingxiao/Desktop/jellyfish/
 PREDICTION_FOLDER="video/video_1_clips/predictions/"
-OUTPUT_FOLDER="video/video_1_clips/predictions/flow-tracking"
+OUTPUT_FOLDER="video/video_1_clips/predictions/flow-tracking/"
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
     mkdir -p "$OUTPUT_FOLDER"
 fi
 
-for i in $(seq 1 6)
+for i in 1 4 6
 do
     PREDICTION_PATH="${PREDICTION_FOLDER}c${i}_predictions.slp"
     OUTPUT_PATH="${OUTPUT_FOLDER}c${i}_flow_tracking.slp"
@@ -15,13 +15,11 @@ do
         -o $OUTPUT_PATH \
         --video.index 0 \
         --video.input_format channels_last \
-        --frames 0,-886 \
         --batch_size 4 \
         --tracking.tracker flow \
         --tracking.similarity centroid \
         --tracking.match hungarian \
         --tracking.track_window 5 \
-        # --tracking.oks_errors \
         --tracking.oks_score_weighting 0 \
         --tracking.post_connect_single_breaks 0 \
         --verbosity json \
