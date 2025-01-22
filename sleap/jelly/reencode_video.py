@@ -14,13 +14,12 @@ def reencode_video(input_file: str, output_file: str) -> None:
     # check directory for saving outputs exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     # create ffmpeg command
-    ffmpeg_cmd = f'ffmpeg -y -i {input_file} -c:v libx264 -pix_fmt yuv420p -preset superfast -crf 23 {output_file}'
-    # ffmpeg -y -i "input.mp4" -c:v libx264 -pix_fmt yuv420p -preset superfast -crf 23 "output.mp4"
+    ffmpeg_cmd = f'ffmpeg -y -i {input_file} -c:v libx264 -pix_fmt yuv420p -preset superfast -crf 18 {output_file}'
     # run command
     subprocess.run(ffmpeg_cmd, shell=True)
 
 if __name__ == "__main__":
     for i in range(1, 5):
         INPUT_FILE = f"/home/mingxiao/Desktop/jellyfish/video/full_video_{i}.avi"
-        OUTPUT_FILE = f"/home/mingxiao/Desktop/jellyfish/video/full_video_{i}.mp4"
+        OUTPUT_FILE = f"/home/mingxiao/Desktop/jellyfish/video/sleap_full_video_{i}_high_res.mp4"
         reencode_video(INPUT_FILE, OUTPUT_FILE)

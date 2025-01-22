@@ -26,7 +26,8 @@ sleap-track $PREDICTION_PATH \
     --tracking.track_window 5 \
     --tracking.post_connect_single_breaks 1 \
     --verbosity json \
-    --no-empty-frames
+    --no-empty-frames \
+    --gpu 'auto'
 
 # sleap-track /home/mingxiao/Desktop/jellyfish/video/video_1_clips/predictions/c1_predictions.slp 
 # --video.index 0 
