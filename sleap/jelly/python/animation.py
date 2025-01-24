@@ -11,7 +11,7 @@ def get_next_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: i
     next_frame_idx = frame_idx + 1
     while next_frame_idx < frame_cnt and all_tracked_points[next_frame_idx, inst_idx].sum() == 0:
         next_frame_idx += 1
-    return max(next_frame_idx, frame_cnt - 1)
+    return min(next_frame_idx, frame_cnt - 1)
 
 def get_prev_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: int) -> int:
     """
@@ -26,15 +26,17 @@ def get_all_tracked_points(label: sleap.Labels, reorder: bool = True) -> np.ndar
     """
     Get all tracked points from a sleap label file.
     """
-    frame_cnt = len(label.labeled_frames)
-    instance_cnt = len(label.labeled_frames[0].instances)
+    labeled_frames_to_use = label.labeled_frames[1:]
+    frame_cnt = len(labeled_frames_to_use)
+    instance_cnt = len(labeled_frames_to_use[0].instances)
     all_tracked_points = np.zeros((frame_cnt, instance_cnt, 2))
+    print(f'all_tracked_points shape: {all_tracked_points.shape}')
 
     # populate all_tracked_coords with known coordinates
-    for lf in label.labeled_frames:
+    for lf in labeled_frames_to_use:
         for instance in lf.instances:
             track_idx = int(instance.track.name.split('_')[-1])
-            all_tracked_points[lf.frame_idx, track_idx] = instance.points_array[0]
+            all_tracked_points[lf.frame_idx - 1, track_idx] = instance.points_array[0]
 
     # interpolate missing coordinates
     missing_point_cnt = 0
@@ -55,32 +57,47 @@ def get_all_tracked_points(label: sleap.Labels, reorder: bool = True) -> np.ndar
 
 def find_polygon_order(points: np.ndarray) -> np.ndarray:
     """
-    Find order of points to form a polygon using nearest neighbor algorithm
+    Find order of points to form a convex polygon using Graham's Scan algorithm
     
     Args:
         points: (N,2) array of point coordinates
         
     Returns:
-        order: array of indices giving the order to connect points
+        order: array of indices giving the order to connect points in convex hull
     """
+    def cross_product(p1, p2, p3):
+        """Returns cross product (p2-p1) × (p3-p1)"""
+        return (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
+    
     N = len(points)
-    unvisited = set(range(N))
+    if N < 3:
+        return np.arange(N)
     
-    # Start with point closest to top of image
-    current = min(range(N), key=lambda i: points[i,1]) 
+    # Find point with lowest y-coordinate (and leftmost if tied)
+    start = min(range(N), key=lambda i: (points[i,1], points[i,0]))
     
-    order = [current]
-    unvisited.remove(current)
+    # Sort points by polar angle with respect to start point
+    angles = []
+    for i in range(N):
+        if i == start:
+            angle = -np.inf
+        else:
+            angle = np.arctan2(points[i,1] - points[start,1],
+                             points[i,0] - points[start,0])
+        angles.append((angle, i))
     
-    # Add closest unvisited point at each step
-    while unvisited:
-        current = min(unvisited, 
-                     key=lambda i: ((points[i,0] - points[current,0])**2 + 
-                                  (points[i,1] - points[current,1])**2))
-        order.append(current)
-        unvisited.remove(current)
-        
-    return np.array(order)
+    sorted_indices = [i for _, i in sorted(angles)[1:]]
+    hull = [start]
+    
+    # Graham's scan
+    for idx in sorted_indices:
+        while len(hull) > 1 and cross_product(points[hull[-2]], 
+                                            points[hull[-1]], 
+                                            points[idx]) <= 0:
+            hull.pop()
+        hull.append(idx)
+    
+    return np.array(hull)
 
 def get_animation(
         label: sleap.Labels,
@@ -92,6 +109,7 @@ def get_animation(
     Get an animation of the tracked points.
     """
     frame_cnt, x, y = label.video.shape[:3]
+    frame_cnt -= 1  # Skip first frame 
     all_tracked_points = get_all_tracked_points(label, reorder)
     
     # Create figure and axis
