@@ -13,6 +13,13 @@ if [ ! -d "$OUTPUT_FOLDER" ]; then
     mkdir -p "$OUTPUT_FOLDER"
 fi
 
+n_threads=40
+export OMP_NUM_THREADS=$n_threads
+export OPENBLAS_NUM_THREADS=$n_threads
+export MKL_NUM_THREADS=$n_threads
+export NUMEXPR_NUM_THREADS=$n_threads
+export VECLIB_MAXIMUM_THREADS=$n_threads
+
 sleap-track $PREDICTION_PATH \
     -o $OUTPUT_PATH \
     --video.index 0 \
