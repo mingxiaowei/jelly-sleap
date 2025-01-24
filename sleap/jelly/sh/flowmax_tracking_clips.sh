@@ -14,7 +14,7 @@ export MKL_NUM_THREADS=$n_threads
 export NUMEXPR_NUM_THREADS=$n_threads
 export VECLIB_MAXIMUM_THREADS=$n_threads
 
-for i in {1..6}
+for i in 3
 do
     PREDICTION_PATH="${PREDICTION_FOLDER}c${i}_predictions.slp"
     OUTPUT_PATH="${OUTPUT_FOLDER}c${i}_flowmax_tracking.slp"
