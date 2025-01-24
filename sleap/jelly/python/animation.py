@@ -3,6 +3,25 @@ import sleap
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
+def get_next_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: int) -> int:
+    """
+    Get the index of the next frame with tracked points.
+    """
+    frame_cnt = all_tracked_points.shape[0]
+    next_frame_idx = frame_idx + 1
+    while next_frame_idx < frame_cnt and all_tracked_points[next_frame_idx, inst_idx].sum() == 0:
+        next_frame_idx += 1
+    return max(next_frame_idx, frame_cnt - 1)
+
+def get_prev_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: int) -> int:
+    """
+    Get the index of the previous frame with tracked points.
+    """
+    prev_frame_idx = frame_idx - 1
+    while prev_frame_idx >= 0 and all_tracked_points[prev_frame_idx, inst_idx].sum() == 0:
+        prev_frame_idx -= 1
+    return max(prev_frame_idx, 0)
+
 def get_all_tracked_points(label: sleap.Labels, reorder: bool = True) -> np.ndarray:
     """
     Get all tracked points from a sleap label file.
@@ -23,18 +42,8 @@ def get_all_tracked_points(label: sleap.Labels, reorder: bool = True) -> np.ndar
         for inst_idx in range(instance_cnt):
             if all_tracked_points[frame_idx, inst_idx].sum() == 0:
                 missing_point_cnt += 1
-                if frame_idx == 0:
-                    prev_frame_idx = frame_idx
-                    while all_tracked_points[prev_frame_idx, inst_idx].sum() == 0:
-                        prev_frame_idx += 1
-                    next_frame_idx = prev_frame_idx
-                else:
-                    prev_frame_idx = frame_idx - 1
-                    while all_tracked_points[prev_frame_idx, inst_idx].sum() == 0:
-                        prev_frame_idx -= 1
-                    next_frame_idx = frame_idx
-                    while all_tracked_points[next_frame_idx, inst_idx].sum() == 0:
-                        next_frame_idx += 1
+                prev_frame_idx = get_prev_frame_idx(all_tracked_points, frame_idx, inst_idx)
+                next_frame_idx = get_next_frame_idx(all_tracked_points, frame_idx, inst_idx)
                 all_tracked_points[frame_idx, inst_idx] = (all_tracked_points[prev_frame_idx, inst_idx] + all_tracked_points[next_frame_idx, inst_idx]) / 2
     print(f"Missing point count: {missing_point_cnt}")
     
