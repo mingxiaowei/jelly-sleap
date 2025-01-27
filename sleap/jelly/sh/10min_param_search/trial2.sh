@@ -15,9 +15,9 @@ export NUMEXPR_NUM_THREADS=$n_threads
 export VECLIB_MAXIMUM_THREADS=$n_threads
 
 PREDICTION_PATH="/home/mingxiao/Desktop/jellyfish/video/video_1_clips/predictions/flowmax-tracking/reencoded_tracking_10min_flowmax.slp"
-OUTPUT_PATH="${OUTPUT_FOLDER}reencoded_10min_t1.slp"
+OUTPUT_PATH="${OUTPUT_FOLDER}reencoded_10min_t2.slp"
 
-# enable prediction score weighing
+# enable prediction score weighing + use tracking window of size 8
 sleap-track $PREDICTION_PATH \
     -o $OUTPUT_PATH \
     --video.index 0 \
@@ -27,8 +27,8 @@ sleap-track $PREDICTION_PATH \
     --tracking.max_tracks 17 \
     --tracking.similarity centroid \
     --tracking.match hungarian \
-    --tracking.track_window 5 \
+    --tracking.track_window 8 \
     --tracking.oks_score_weighting 1 \
     --tracking.post_connect_single_breaks 1 \
-    --verbosity json \
+    --verbosity rich \
     --no-empty-frames
