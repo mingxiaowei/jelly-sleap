@@ -22,6 +22,7 @@ sleap-track $PREDICTION_PATH \
     -o $OUTPUT_PATH \
     --video.index 0 \
     --batch_size 4 \
+    --frames 1-9000 \
     --tracking.max_tracking 1 \
     --tracking.tracker flowmaxtracks \
     --tracking.max_tracks 17 \

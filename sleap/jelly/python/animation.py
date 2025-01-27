@@ -136,7 +136,8 @@ def get_animation(
         output_path: str = None
     ) -> animation.FuncAnimation:
     """
-    Get an animation of the tracked points.
+    Get an animation of the tracked points. 
+    (First frame is skipped as there are one more instance than imposed max for some reason.) 
     """
     frame_cnt, x, y = label.video.shape[:3]
     frame_cnt -= 1  # Skip first frame 
