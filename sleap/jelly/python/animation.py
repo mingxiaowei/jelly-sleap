@@ -51,53 +51,83 @@ def get_all_tracked_points(label: sleap.Labels, reorder: bool = True) -> np.ndar
     
     if reorder:
         reorder_idx = find_polygon_order(all_tracked_points[0])
+        print(f"reorder_idx.shape: {reorder_idx.shape}")
         all_tracked_points = all_tracked_points[:, reorder_idx, :]
     
     return all_tracked_points
 
 def find_polygon_order(points: np.ndarray) -> np.ndarray:
     """
-    Find order of points to form a convex polygon using Graham's Scan algorithm
+    Find order of points to form a polygon by sorting based on angles from centroid
     
     Args:
         points: (N,2) array of point coordinates
         
     Returns:
-        order: array of indices giving the order to connect points in convex hull
+        order: array of indices giving the order to connect points
     """
-    def cross_product(p1, p2, p3):
-        """Returns cross product (p2-p1) × (p3-p1)"""
-        return (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
-    
     N = len(points)
     if N < 3:
         return np.arange(N)
     
-    # Find point with lowest y-coordinate (and leftmost if tied)
-    start = min(range(N), key=lambda i: (points[i,1], points[i,0]))
+    # Calculate centroid
+    centroid = points.mean(axis=0)
     
-    # Sort points by polar angle with respect to start point
+    # Calculate angles from centroid to all points
     angles = []
     for i in range(N):
-        if i == start:
-            angle = -np.inf
-        else:
-            angle = np.arctan2(points[i,1] - points[start,1],
-                             points[i,0] - points[start,0])
+        angle = np.arctan2(points[i,1] - centroid[1],
+                          points[i,0] - centroid[0])
         angles.append((angle, i))
     
-    sorted_indices = [i for _, i in sorted(angles)[1:]]
-    hull = [start]
+    # Sort points by angle
+    sorted_indices = [i for _, i in sorted(angles)]
     
-    # Graham's scan
-    for idx in sorted_indices:
-        while len(hull) > 1 and cross_product(points[hull[-2]], 
-                                            points[hull[-1]], 
-                                            points[idx]) <= 0:
-            hull.pop()
-        hull.append(idx)
+    return np.array(sorted_indices)
+
+# def find_polygon_order(points: np.ndarray) -> np.ndarray:
+#     """
+#     Find order of points to form a convex polygon using Graham's Scan algorithm
     
-    return np.array(hull)
+#     Args:
+#         points: (N,2) array of point coordinates
+        
+#     Returns:
+#         order: array of indices giving the order to connect points in convex hull
+#     """
+#     def cross_product(p1, p2, p3):
+#         """Returns cross product (p2-p1) × (p3-p1)"""
+#         return (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
+    
+#     N = len(points)
+#     if N < 3:
+#         return np.arange(N)
+    
+#     # Find point with lowest y-coordinate (and leftmost if tied)
+#     start = min(range(N), key=lambda i: (points[i,1], points[i,0]))
+    
+#     # Sort points by polar angle with respect to start point
+#     angles = []
+#     for i in range(N):
+#         if i == start:
+#             angle = -np.inf
+#         else:
+#             angle = np.arctan2(points[i,1] - points[start,1],
+#                              points[i,0] - points[start,0])
+#         angles.append((angle, i))
+    
+#     sorted_indices = [i for _, i in sorted(angles)[1:]]
+#     hull = [start]
+    
+#     # Graham's scan
+#     for idx in sorted_indices:
+#         while len(hull) > 1 and cross_product(points[hull[-2]], 
+#                                             points[hull[-1]], 
+#                                             points[idx]) <= 0:
+#             hull.pop()
+#         hull.append(idx)
+    
+#     return np.array(hull)
 
 def get_animation(
         label: sleap.Labels,
