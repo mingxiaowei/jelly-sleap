@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from .animation import *
 
-def get_all_radii(tracked_points, center_pos):
+def get_all_radii(tracked_points, center_pos=np.array([91, 77])):
     all_radii = np.zeros(tracked_points.shape[:2])
     for i in range(tracked_points.shape[0]):
         for j in range(tracked_points.shape[1]):
@@ -61,14 +61,14 @@ def plot_radii_derivative(all_radii, first_x_proportion=1):
     plt.tight_layout()
     plt.show()
 
-def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, plot=True):
+def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, derivative_thres=5, plot=True):
     plt.figure(figsize=(12, 6))
 
     # Calculate derivatives
     derivatives = np.diff(all_radii, axis=0)
 
     # Find ranges where all derivatives are between -5 and 5
-    all_stable = np.all((derivatives > -5) & (derivatives < 5), axis=1)
+    all_stable = np.all((derivatives > -derivative_thres) & (derivatives < derivative_thres), axis=1)
     ranges = []
     start_idx = None
 
