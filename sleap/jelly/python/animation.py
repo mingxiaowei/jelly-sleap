@@ -76,8 +76,7 @@ def find_polygon_order(points: np.ndarray) -> np.ndarray:
     # Calculate angles from centroid to all points
     angles = []
     for i in range(N):
-        angle = np.arctan2(points[i,1] - centroid[1],
-                          points[i,0] - centroid[0])
+        angle = np.arctan2(points[i,1] - centroid[1], points[i,0] - centroid[0])
         angles.append((angle, i))
     
     # Sort points by angle
