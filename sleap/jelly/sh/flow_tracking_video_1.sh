@@ -2,11 +2,11 @@
 
 JELLY_PATH="/home/mingxiao/Desktop/jellyfish/"
 PREDICTION_FOLDER="${JELLY_PATH}label/multifish/predictions/"
-OUTPUT_FOLDER="${JELLY_PATH}label/multifish/predictions/simple-tracking/"
-OUTPUT_FILE="video_1_simple_tracking.slp"
+OUTPUT_FOLDER="${JELLY_PATH}label/multifish/predictions/flowmax-tracking/"
+OUTPUT_FILE="video_1_flowmax_tracking.slp"
 OUTPUT_PATH="${OUTPUT_FOLDER}${OUTPUT_FILE}"
 
-PREDICTION_FILE="multifish_animal_1_v4.slp.250117_155941.predictions.slp"
+PREDICTION_FILE="multifish_animal_1_v7.slp.250127_164708.predictions.slp"
 PREDICTION_PATH="${PREDICTION_FOLDER}${PREDICTION_FILE}"
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
@@ -24,15 +24,17 @@ sleap-track $PREDICTION_PATH \
     -o $OUTPUT_PATH \
     --video.index 0 \
     --video.input_format channels_last \
-    --batch_size 4 \
+    --batch_size 20 \
     --tracking.max_tracking 1 \
     --tracking.tracker flowmaxtracks \
     --tracking.max_tracks 17 \
     --tracking.similarity centroid \
     --tracking.match hungarian \
-    --tracking.track_window 5 \
+    --tracking.track_window 10 \
+    --tracking.oks_score_weighting 1 \
     --tracking.post_connect_single_breaks 1 \
-    --verbosity json \
+    --tracking.robust 0.9 \
+    --verbosity rich \
     --no-empty-frames \
     --gpu 'auto'
 
