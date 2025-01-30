@@ -1,5 +1,6 @@
 import numpy as np
 import sleap
+import os
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
@@ -22,7 +23,7 @@ def get_prev_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: i
         prev_frame_idx -= 1
     return max(prev_frame_idx, 0)
 
-def get_all_tracked_points(label: sleap.Labels, reorder: bool = True) -> np.ndarray:
+def get_all_tracked_points(label: sleap.Labels, reorder: bool = True, min_score: int = 0) -> np.ndarray:
     """
     Get all tracked points from a sleap label file.
     """
@@ -35,6 +36,8 @@ def get_all_tracked_points(label: sleap.Labels, reorder: bool = True) -> np.ndar
     # populate all_tracked_coords with known coordinates
     for lf in labeled_frames_to_use:
         for instance in lf.instances:
+            if isinstance(instance, sleap.instance.PredictedInstance) and instance.score < min_score:
+                continue
             track_idx = int(instance.track.name.split('_')[-1])
             all_tracked_points[lf.frame_idx - 1, track_idx] = instance.points_array[0]
 
@@ -142,7 +145,16 @@ def get_animation(
     frame_cnt -= 1  # Skip first frame 
     all_tracked_points = get_all_tracked_points(label, reorder)
     
-    # Create figure and axis
+    return get_animation_from_tracked_points(all_tracked_points, x, y, fps, output_path)
+
+def get_animation_from_tracked_points(
+        tracked_points: np.ndarray,
+        x: int,
+        y: int,
+        fps: int = 50,
+        output_path: str = None
+    ) -> animation.FuncAnimation:
+    frame_cnt = tracked_points.shape[0]
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.set_xlim(0, x)
     ax.set_ylim(0, y)
@@ -159,7 +171,7 @@ def get_animation(
 
     def animate(frame):
         # Get points for current frame
-        points = all_tracked_points[frame]  # Shape: (17, 2)
+        points = tracked_points[frame]  # Shape: (17, 2)
         
         # Add first point to end to close the polygon
         points_closed = np.vstack([points, points[0]])
@@ -177,6 +189,8 @@ def get_animation(
 
     # Optional: save animation
     if output_path is not None:
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
         anim.save(output_path, writer='ffmpeg', fps=fps)
         print(f"Animation saved to {output_path}")
     return anim
