@@ -128,3 +128,10 @@ def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, deriva
         plt.show()
 
     return filtered_ranges
+
+def get_id_mapping_array(all_tracked_points: np.ndarray) -> np.ndarray:
+    """
+    Initialize the id mapping array for the tracked points
+    """
+    frame_cnt, pt_cnt = all_tracked_points.shape[:2]
+    return np.tile(np.arange(pt_cnt), (frame_cnt, 1))
