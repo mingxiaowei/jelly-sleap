@@ -152,6 +152,8 @@ def get_animation_from_tracked_points(
         x: int,
         y: int,
         fps: int = 50,
+        bg_video: sleap.Video = None,
+        bg_video_start_idx: int = 1,
         output_path: str = None
     ) -> animation.FuncAnimation:
     frame_cnt = tracked_points.shape[0]
@@ -163,13 +165,19 @@ def get_animation_from_tracked_points(
     # Initialize empty line and scatter objects
     line, = ax.plot([], [], 'b-', lw=1)  # Line for edges
     scat = ax.scatter([], [], c='red', s=30)  # Points
+    bg_img = ax.imshow(np.zeros((y, x)), cmap='gray', vmin=0, vmax=255)  # Background image
 
     def init():
         line.set_data([], [])
-        scat.set_offsets(np.zeros((0, 2)))  # Correct way to initialize empty scatter
-        return line, scat
+        scat.set_offsets(np.zeros((0, 2)))
+        return line, scat, bg_img
 
     def animate(frame):
+        # Update background if video is provided
+        if bg_video is not None:
+            bg_frame = bg_video.get_frame(frame + bg_video_start_idx)
+            bg_img.set_array(bg_frame[:, :, 0])  # Use first channel for grayscale
+        
         # Get points for current frame
         points = tracked_points[frame]  # Shape: (17, 2)
         
@@ -182,7 +190,7 @@ def get_animation_from_tracked_points(
         # Update scatter (points)
         scat.set_offsets(points)
         
-        return line, scat
+        return line, scat, bg_img
 
     # Create animation
     anim = animation.FuncAnimation(fig, animate, init_func=init, frames=frame_cnt, interval=50, blit=True)
