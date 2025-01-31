@@ -24,7 +24,10 @@ def get_prev_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: i
         prev_frame_idx -= 1
     return max(prev_frame_idx, 0)
 
-def get_all_tracked_points(label: sleap.Labels, reorder: bool = True, min_score: int = 0) -> np.ndarray:
+def get_all_tracked_points(label: sleap.Labels, 
+                           reorder: bool = True, 
+                           interpolate: bool = True,
+                           min_score: int = 0) -> np.ndarray:
     """
     Get all tracked points from a sleap label file.
     """
@@ -48,13 +51,15 @@ def get_all_tracked_points(label: sleap.Labels, reorder: bool = True, min_score:
         for inst_idx in range(instance_cnt):
             if all_tracked_points[frame_idx, inst_idx].sum() == 0:
                 missing_point_cnt += 1
-                prev_frame_idx = get_prev_frame_idx(all_tracked_points, frame_idx, inst_idx)
-                next_frame_idx = get_next_frame_idx(all_tracked_points, frame_idx, inst_idx)
-                all_tracked_points[frame_idx, inst_idx] = (all_tracked_points[prev_frame_idx, inst_idx] + all_tracked_points[next_frame_idx, inst_idx]) / 2
+                if interpolate:
+                    prev_frame_idx = get_prev_frame_idx(all_tracked_points, frame_idx, inst_idx)
+                    next_frame_idx = get_next_frame_idx(all_tracked_points, frame_idx, inst_idx)
+                    all_tracked_points[frame_idx, inst_idx] = (all_tracked_points[prev_frame_idx, inst_idx] + all_tracked_points[next_frame_idx, inst_idx]) / 2
     print(f"Missing point count: {missing_point_cnt}")
     
-    if reorder:
-        reorder_idx = find_polygon_order(all_tracked_points[0])
+    if reorder: 
+        first_non_missing_frame_idx = np.where(missing_point_cnt == 0)[0][0]
+        reorder_idx = find_polygon_order(all_tracked_points[first_non_missing_frame_idx])
         print(f"reorder_idx.shape: {reorder_idx.shape}")
         all_tracked_points = all_tracked_points[:, reorder_idx, :]
     
