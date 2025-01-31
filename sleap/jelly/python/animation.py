@@ -3,6 +3,7 @@ import sleap
 import os
 import matplotlib.pyplot as plt
 from matplotlib import animation
+from typing import Union
 
 def get_next_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: int) -> int:
     """
@@ -87,50 +88,6 @@ def find_polygon_order(points: np.ndarray) -> np.ndarray:
     
     return np.array(sorted_indices)
 
-# def find_polygon_order(points: np.ndarray) -> np.ndarray:
-#     """
-#     Find order of points to form a convex polygon using Graham's Scan algorithm
-    
-#     Args:
-#         points: (N,2) array of point coordinates
-        
-#     Returns:
-#         order: array of indices giving the order to connect points in convex hull
-#     """
-#     def cross_product(p1, p2, p3):
-#         """Returns cross product (p2-p1) × (p3-p1)"""
-#         return (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
-    
-#     N = len(points)
-#     if N < 3:
-#         return np.arange(N)
-    
-#     # Find point with lowest y-coordinate (and leftmost if tied)
-#     start = min(range(N), key=lambda i: (points[i,1], points[i,0]))
-    
-#     # Sort points by polar angle with respect to start point
-#     angles = []
-#     for i in range(N):
-#         if i == start:
-#             angle = -np.inf
-#         else:
-#             angle = np.arctan2(points[i,1] - points[start,1],
-#                              points[i,0] - points[start,0])
-#         angles.append((angle, i))
-    
-#     sorted_indices = [i for _, i in sorted(angles)[1:]]
-#     hull = [start]
-    
-#     # Graham's scan
-#     for idx in sorted_indices:
-#         while len(hull) > 1 and cross_product(points[hull[-2]], 
-#                                             points[hull[-1]], 
-#                                             points[idx]) <= 0:
-#             hull.pop()
-#         hull.append(idx)
-    
-#     return np.array(hull)
-
 def get_animation(
         label: sleap.Labels,
         reorder: bool = True,
@@ -148,7 +105,7 @@ def get_animation(
     return get_animation_from_tracked_points(all_tracked_points, x, y, fps, output_path)
 
 def get_animation_from_tracked_points(
-        tracked_points: np.ndarray,
+        tracked_points_lst: Union[list, np.ndarray],  # List of tracked_points arrays
         x: int,
         y: int,
         fps: int = 50,
@@ -156,44 +113,68 @@ def get_animation_from_tracked_points(
         bg_video_start_idx: int = 1,
         output_path: str = None
     ) -> animation.FuncAnimation:
-    frame_cnt = tracked_points.shape[0]
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ax.set_xlim(0, x)
-    ax.set_ylim(0, y)
-    ax.invert_yaxis()  # Invert y-axis since image coordinates start from top
-
-    # Initialize empty line and scatter objects
-    line, = ax.plot([], [], 'b-', lw=1)  # Line for edges
-    scat = ax.scatter([], [], c='red', s=30)  # Points
-    bg_img = ax.imshow(np.zeros((y, x)), cmap='gray', vmin=0, vmax=255)  # Background image
+    
+    if not isinstance(tracked_points_lst, list):
+        tracked_points_lst = [tracked_points_lst]
+    frame_cnt = tracked_points_lst[0].shape[0]
+    n_plots = len(tracked_points_lst)
+    
+    # Create figure with subplots
+    fig, axes = plt.subplots(1, n_plots, figsize=(8*n_plots, 8))
+    if n_plots == 1:
+        axes = [axes]  # Make axes iterable when only one subplot
+    
+    # Initialize plot elements for each subplot
+    lines = []
+    scats = []
+    bg_imgs = []
+    
+    for ax in axes:
+        ax.set_xlim(0, x)
+        ax.set_ylim(0, y)
+        ax.invert_yaxis()
+        
+        # Initialize empty line and scatter objects for each subplot
+        line, = ax.plot([], [], 'b-', lw=1)
+        scat = ax.scatter([], [], c='red', s=30)
+        bg_img = ax.imshow(np.zeros((y, x)), cmap='gray', vmin=0, vmax=255)
+        
+        lines.append(line)
+        scats.append(scat)
+        bg_imgs.append(bg_img)
 
     def init():
-        line.set_data([], [])
-        scat.set_offsets(np.zeros((0, 2)))
-        return line, scat, bg_img
+        plot_elements = []
+        for line, scat, bg_img in zip(lines, scats, bg_imgs):
+            line.set_data([], [])
+            scat.set_offsets(np.zeros((0, 2)))
+            plot_elements.extend([line, scat, bg_img])
+        return plot_elements
 
     def animate(frame):
-        # Update background if video is provided
+        plot_elements = []
+        
+        # Update background (same for all subplots)
         if bg_video is not None:
             bg_frame = bg_video.get_frame(frame + bg_video_start_idx)
-            bg_img.set_array(bg_frame[:, :, 0])  # Use first channel for grayscale
+            for bg_img in bg_imgs:
+                bg_img.set_array(bg_frame[:, :, 0])
         
-        # Get points for current frame
-        points = tracked_points[frame]  # Shape: (17, 2)
-        
-        # Add first point to end to close the polygon
-        points_closed = np.vstack([points, points[0]])
-        
-        # Update line (edges)
-        line.set_data(points_closed[:, 0], points_closed[:, 1])
-        
-        # Update scatter (points)
-        scat.set_offsets(points)
-        
-        return line, scat, bg_img
+        # Update each subplot
+        for i, (tracked_points, line, scat) in enumerate(zip(tracked_points_lst, lines, scats)):
+            points = tracked_points[frame]
+            points_closed = np.vstack([points, points[0]])
+            
+            line.set_data(points_closed[:, 0], points_closed[:, 1])
+            scat.set_offsets(points)
+            
+            plot_elements.extend([line, scat, bg_imgs[i]])
+            
+        return plot_elements
 
     # Create animation
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=frame_cnt, interval=50, blit=True)
+    anim = animation.FuncAnimation(fig, animate, init_func=init, 
+                                 frames=frame_cnt, interval=50, blit=True)
 
     # Optional: save animation
     if output_path is not None:
@@ -201,4 +182,44 @@ def get_animation_from_tracked_points(
         os.makedirs(output_dir, exist_ok=True)
         anim.save(output_path, writer='ffmpeg', fps=fps)
         print(f"Animation saved to {output_path}")
+        
+    plt.tight_layout()
     return anim
+
+def plot_polygon(points, order, ax, title):
+    """Helper function to plot a polygon with given point order"""
+    # Plot points
+    ax.scatter(points[:, 0], points[:, 1], c='blue', s=50)
+    
+    # Plot edges connecting points in order
+    for i in range(len(order)):
+        start = points[order[i]]
+        end = points[order[(i + 1) % len(order)]]
+        ax.plot([start[0], end[0]], [start[1], end[1]], 'r-', alpha=0.7)
+        
+        # Add point indices as labels
+        ax.text(points[order[i], 0], points[order[i], 1], 
+                str(order[i]), fontsize=8, ha='right')
+    
+    ax.set_title(title)
+    ax.axis('equal')
+
+def get_total_edge_length(points, order):
+    total = 0
+    for i in range(len(order)):
+        start = points[order[i]]
+        end = points[order[(i + 1) % len(order)]]
+        total += np.sqrt(np.sum((end - start)**2))
+    return total
+
+def plot_some_polygons(points: np.ndarray, poly_constructors: list):
+    polygons = [poly_constructor(points) for poly_constructor in poly_constructors]
+    _, axs = plt.subplots(1, len(polygons), figsize=(15, 5))
+    for i, order in enumerate(polygons):
+        plot_polygon(points, order, axs[i], f'poly_{i+1}')
+    plt.tight_layout()
+    plt.show()
+    
+    print("\nTotal edge lengths:")
+    for i, order in enumerate(polygons):
+        print(f"poly_{i+1}: {get_total_edge_length(points, order):.3f}")
