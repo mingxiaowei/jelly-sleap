@@ -29,6 +29,9 @@ def get_corrected_coords(all_tracked_points, id_mapping):
 
 def polygon_correction(labels, polygon_constructor, mins_score=0.4):
     all_tracked_points = get_all_tracked_points(labels, reorder=True, min_score=mins_score)
+    return polygon_correction_with_points(all_tracked_points, polygon_constructor)
+
+def polygon_correction_with_points(all_tracked_points, polygon_constructor):
     id_mapping = get_id_mapping_array(all_tracked_points)
     id_mapping = id_mapping.copy()
     frame_cnt = all_tracked_points.shape[0]
@@ -119,3 +122,12 @@ def poly_3(all_tracked_points):
     distance_matrix = euclidean_distance_matrix(points)
     permutation, _ = solve_tsp_local_search(distance_matrix, x0=initial_permutation)
     return permutation
+
+def get_frame_missing_cnt_arr(all_tracked_points):
+    frame_cnt, inst_cnt = all_tracked_points.shape[:2]
+    frame_missing_cnt = np.zeros(frame_cnt)
+    for frame_idx in range(frame_cnt):
+        for inst_idx in range(inst_cnt):
+            if all_tracked_points[frame_idx, inst_idx].sum() == 0:
+                frame_missing_cnt[frame_idx] += 1
+    return frame_missing_cnt
