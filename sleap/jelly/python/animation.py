@@ -47,18 +47,23 @@ def get_all_tracked_points(label: sleap.Labels,
 
     # interpolate missing coordinates
     missing_point_cnt = 0
+    first_non_missing_frame_idx = None
     for frame_idx in range(frame_cnt):
+        curr_frame_missing_point_cnt = 0
         for inst_idx in range(instance_cnt):
             if all_tracked_points[frame_idx, inst_idx].sum() == 0:
-                missing_point_cnt += 1
+                curr_frame_missing_point_cnt += 1
                 if interpolate:
                     prev_frame_idx = get_prev_frame_idx(all_tracked_points, frame_idx, inst_idx)
                     next_frame_idx = get_next_frame_idx(all_tracked_points, frame_idx, inst_idx)
                     all_tracked_points[frame_idx, inst_idx] = (all_tracked_points[prev_frame_idx, inst_idx] + all_tracked_points[next_frame_idx, inst_idx]) / 2
+        missing_point_cnt += curr_frame_missing_point_cnt
+        if first_non_missing_frame_idx is None and curr_frame_missing_point_cnt == 0:
+            first_non_missing_frame_idx = frame_idx
+            print(f"First non missing frame idx: {first_non_missing_frame_idx}")
     print(f"Missing point count: {missing_point_cnt}")
     
     if reorder: 
-        first_non_missing_frame_idx = np.where(missing_point_cnt == 0)[0][0]
         reorder_idx = find_polygon_order(all_tracked_points[first_non_missing_frame_idx])
         print(f"reorder_idx.shape: {reorder_idx.shape}")
         all_tracked_points = all_tracked_points[:, reorder_idx, :]
