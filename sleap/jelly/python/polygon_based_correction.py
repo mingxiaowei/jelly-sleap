@@ -4,22 +4,10 @@ from python_tsp.heuristics import solve_tsp_local_search
 from .animation import *
 from .postprocess import *
 
-def find_best_roll(curr_frame_indices: np.ndarray, prev_frame_indices: np.ndarray) -> int:
-    """
-    Find the optimal roll shift that maximizes alignment between two index arrays
-    
-    Args:
-        curr_frame_indices: array of current frame indices
-        prev_frame_indices: array of previous frame indices
-        
-    Returns:
-        best_shift: integer shift that maximizes alignment
-    """
-    if np.array_equal(curr_frame_indices, prev_frame_indices):
-        return 0
-    n = len(curr_frame_indices)
-    max_key = lambda n: np.sum(np.roll(curr_frame_indices, n) == prev_frame_indices)
-    return max(range(n), key=max_key)
+def find_best_roll(curr_frame_pts: np.ndarray, prev_frame_pts: np.ndarray) -> int:
+    n = len(curr_frame_pts)
+    comparator = lambda n: np.sum((np.roll(curr_frame_pts, n) - prev_frame_pts) ** 2)
+    return min(range(n), key=comparator)
 
 def get_corrected_coords(all_tracked_points, id_mapping):
     corrected_coords = all_tracked_points.copy()
