@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
-def build_gpu_model():
+def build_model():
     # Inputs
     video_input = layers.Input(shape=(170, 174, 1), name="video_input")
     points_input = layers.Input(shape=(17, 2), name="points_input")

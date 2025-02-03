@@ -3,7 +3,7 @@ from load_data_10min import *
 import os
 
 if __name__ == "__main__":
-    model = build_gpu_model()
+    model = build_model()
     model.summary()
     train_data, val_data = load_data_cpu()
     

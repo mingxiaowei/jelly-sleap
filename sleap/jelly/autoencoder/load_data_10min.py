@@ -3,7 +3,12 @@ import numpy as np
 import cv2
 import tensorflow as tf
 
-def load_video(video_path, target_size=None):
+video_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_high_res_10min_track_reencoded.mp4"
+points_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/all_points_corrected_10min.npy"
+
+tf.device('/cpu:0')
+
+def load_video(video_path=video_path, target_size=None, load_as_tensor=False):
     """
     Load an MP4 video into a numpy array (grayscale).
     
@@ -29,7 +34,13 @@ def load_video(video_path, target_size=None):
     
     cap.release()
     video_array = np.array(frames)  # Shape: (num_frames, height, width)
-    return video_array
+    
+    if load_as_tensor:
+        video_tensor = tf.constant(video_array, dtype=tf.float16) / 255.0
+        video_tensor = tf.expand_dims(video_tensor, axis=-1)  # Add channel dim
+        return video_tensor
+    else:
+        return video_array
 
 def create_noisy_points(points_tensor, noise_std=0.05):
     noise = tf.random.normal(tf.shape(points_tensor), stddev=noise_std)
@@ -39,26 +50,41 @@ def create_noisy_points(points_tensor, noise_std=0.05):
     shuffled_points = tf.random.shuffle(tf.transpose(noisy_points, perm=[0, 2, 1]))
     return tf.transpose(shuffled_points, perm=[0, 2, 1])
 
+def load_points(points_path=points_path, load_as_tensor=False):
+    points_array = np.load(points_path)
+    if load_as_tensor:
+        points_tensor = tf.constant(points_array, dtype=tf.float32)
+        return points_tensor
+    else:
+        return points_array
 
-def load_data():
-    video_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_high_res_10min_track_reencoded.mp4"
-    video_data = load_video(video_path)
-    
-    all_tracked_points = np.load('/home/mingxiao/Desktop/jellyfish/video/video_1_clips/all_points_corrected_10min.npy')
-    if video_data.shape[0] > all_tracked_points.shape[0]:
-        video_data = video_data[video_data.shape[0] - all_tracked_points.shape[0]:, :, :]
-    print(f'video_data.shape: {video_data.shape}')
-    print(f'all_tracked_points.shape: {all_tracked_points.shape}')
-
-    video_tensor = tf.constant(video_data, dtype=tf.float16) / 255.0
-    video_tensor = tf.expand_dims(video_tensor, axis=-1)  # Add channel dim
-    
-    frame_cnt, x, y = video_tensor.shape[:3]
-    points_tensor = tf.constant(all_tracked_points, dtype=tf.float32)
+def preprocess_data(points_tensor, video_tensor, add_noise=True):
+    if video_tensor.shape[0] > points_tensor.shape[0]:
+        video_tensor = video_tensor[video_tensor.shape[0] - points_tensor.shape[0]:, :, :]
+    _, x, y = video_tensor.shape[:3]
     canvas_size = tf.constant([y, x], dtype=tf.float32)  # (width, height)
-    points_tensor = points_tensor / canvas_size    
+    points_tensor = points_tensor / canvas_size
     
-    noisy_points_tensor = create_noisy_points(points_tensor)
+    if add_noise:
+        noisy_points_tensor = create_noisy_points(points_tensor)
+    else:
+        noisy_points_tensor = points_tensor
+    
+    return video_tensor, noisy_points_tensor, points_tensor
+
+def load_prediction_input(video_path=video_path, points_path=points_path, load_as_tensor=True):
+    video_tensor = load_video(video_path, load_as_tensor=load_as_tensor)
+    points_tensor = load_points(points_path, load_as_tensor=load_as_tensor)
+    
+    video_tensor, _, points_tensor = preprocess_data(points_tensor, video_tensor, add_noise=False)
+    return video_tensor, points_tensor
+
+def load_data(video_path=video_path, points_path=points_path, load_as_tensor=True):
+    
+    video_tensor = load_video(video_path, load_as_tensor=load_as_tensor)
+    points_tensor = load_points(points_path, load_as_tensor=load_as_tensor)
+    
+    video_tensor, noisy_points_tensor, points_tensor = preprocess_data(points_tensor, video_tensor, add_noise=True)
     
     # Calculate split index (e.g., 90% train, 10% validation)
     split_idx = int(0.9 * len(video_tensor))  # Assuming video_tensor has 90003 frames
@@ -91,3 +117,8 @@ def load_data_cpu():
     with tf.device('/cpu:0'):
         train_data, val_data = load_data()
     return train_data, val_data
+
+def load_prediction_input_cpu():
+    with tf.device('/cpu:0'):
+        prediction_input = load_prediction_input()
+    return prediction_input
