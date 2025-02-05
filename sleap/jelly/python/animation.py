@@ -27,11 +27,12 @@ def get_prev_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: i
 def get_all_tracked_points(label: sleap.Labels, 
                            reorder: bool = True, 
                            interpolate: bool = True,
-                           min_score: int = 0) -> np.ndarray:
+                           min_score: int = 0, 
+                           start_idx: int = 1) -> np.ndarray:
     """
     Get all tracked points from a sleap label file.
     """
-    labeled_frames_to_use = label.labeled_frames[1:]
+    labeled_frames_to_use = label.labeled_frames[start_idx:]
     frame_cnt = len(labeled_frames_to_use)
     instance_cnt = len(labeled_frames_to_use[0].instances)
     all_tracked_points = np.zeros((frame_cnt, instance_cnt, 2))

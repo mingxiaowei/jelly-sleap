@@ -4,7 +4,8 @@ import cv2
 import tensorflow as tf
 
 video_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_high_res_10min_track_reencoded.mp4"
-points_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/all_points_corrected_10min.npy"
+# points_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/all_points_corrected_10min.npy"
+points_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/all_tracked_points_raw_0.npy'
 
 tf.device('/cpu:0')
 
@@ -72,12 +73,22 @@ def preprocess_data(points_tensor, video_tensor, add_noise=True):
     
     return video_tensor, noisy_points_tensor, points_tensor
 
-def load_prediction_input(video_path=video_path, points_path=points_path, load_as_tensor=True):
-    video_tensor = load_video(video_path, load_as_tensor=load_as_tensor)
-    points_tensor = load_points(points_path, load_as_tensor=load_as_tensor)
-    
-    video_tensor, _, points_tensor = preprocess_data(points_tensor, video_tensor, add_noise=False)
+def load_prediction_input(video_path=video_path, points_path=points_path, load_as_tensor=True, use_cpu=True):
+    if use_cpu:
+        with tf.device('/cpu:0'):
+            video_tensor = load_video(video_path, load_as_tensor=load_as_tensor)
+            points_tensor = load_points(points_path, load_as_tensor=load_as_tensor)
+            
+        video_tensor, _, points_tensor = preprocess_data(points_tensor, video_tensor, add_noise=False)
+    else:
+        video_tensor = load_video(video_path, load_as_tensor=load_as_tensor)
+        points_tensor = load_points(points_path, load_as_tensor=load_as_tensor)
+        video_tensor, _, points_tensor = preprocess_data(points_tensor, video_tensor, add_noise=False)
     return video_tensor, points_tensor
+
+def load_prediction_input_pts_only(points_path=points_path, load_as_tensor=True):
+    points_tensor = load_points(points_path, load_as_tensor=load_as_tensor)
+    return points_tensor
 
 def load_data(video_path=video_path, points_path=points_path, load_as_tensor=True):
     
@@ -113,12 +124,47 @@ def load_data(video_path=video_path, points_path=points_path, load_as_tensor=Tru
     
     return train_dataset, val_dataset
 
-def load_data_cpu():
+def load_data_cpu(load_video=True):
     with tf.device('/cpu:0'):
-        train_data, val_data = load_data()
+        if load_video:
+            train_data, val_data = load_data()
+        else:
+            train_data, val_data = load_data_pts_only()
     return train_data, val_data
 
-def load_prediction_input_cpu():
+def load_prediction_input_cpu(load_video=True):
     with tf.device('/cpu:0'):
-        prediction_input = load_prediction_input()
+        if load_video:
+            prediction_input = load_prediction_input()
+        else:
+            prediction_input = load_prediction_input_pts_only()
     return prediction_input
+
+def load_data_pts_only(points_path=points_path, load_as_tensor=True):
+    
+    points_tensor = load_points(points_path, load_as_tensor=load_as_tensor)
+    
+    # Calculate split index (e.g., 90% train, 10% validation)
+    split_idx = int(0.9 * len(points_tensor))  # Assuming video_tensor has 90003 frames
+
+    # Training data
+    train_points = points_tensor[:split_idx]
+    train_true = points_tensor[:split_idx]
+
+    # Validation data
+    val_points = points_tensor[split_idx:]
+    val_true = points_tensor[split_idx:]
+    
+    batch_size = 64
+
+    # Training dataset
+    train_dataset = tf.data.Dataset.from_tensor_slices(
+        (train_points, train_true)
+    ).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
+    # Validation dataset
+    val_dataset = tf.data.Dataset.from_tensor_slices(
+        (val_points, val_true)
+    ).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+    
+    return train_dataset, val_dataset

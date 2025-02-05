@@ -137,7 +137,7 @@ def get_id_mapping_array(all_tracked_points: np.ndarray) -> np.ndarray:
     frame_cnt, pt_cnt = all_tracked_points.shape[:2]
     return np.tile(np.arange(pt_cnt), (frame_cnt, 1))
 
-def dataset_with_new_points(old_labels, new_points):
+def dataset_with_new_points(old_labels, new_points, handle_first_frame=True):
     corrected_label = copy(old_labels)
     skl = corrected_label.skeletons[0]
     instance_cnt = len(corrected_label.labeled_frames[1].instances)
@@ -147,10 +147,14 @@ def dataset_with_new_points(old_labels, new_points):
         track_name = int(trk.name.split('_')[-1])
         track_name_to_idx[track_name] = trk_idx
     
+    missing_pt_cnt = 0
     for lf_idx, lf in enumerate(corrected_label.labeled_frames[1:], start=1):
         all_instances = []
         for inst_idx in range(instance_cnt):
             x, y = new_points[lf_idx - 1, inst_idx]
+            if x + y == 0:
+                missing_pt_cnt += 1
+                continue
             point_dict = {'tb1_node': sleap.instance.Point(x=x, y=y)}
             curr_track = corrected_label.tracks[track_name_to_idx[inst_idx]]
             curr_track_num = int(curr_track.name.split('_')[-1])
@@ -159,32 +163,34 @@ def dataset_with_new_points(old_labels, new_points):
             tb_instance = sleap.Instance(skeleton=skl, points=point_dict, frame=lf, track=curr_track)
             all_instances.append(tb_instance)
         lf.instances = all_instances
+    print(f'missing_pt_cnt: {missing_pt_cnt}')
     
-    # special handling of the first frame
-    frame_0_instances = corrected_label.labeled_frames[0].instances[:]
-    frame_0_instances.pop(4)
-    new_frame_0_instances = []
-    lf = corrected_label.labeled_frames[0]
+    if handle_first_frame:
+        # special handling of the first frame
+        frame_0_instances = corrected_label.labeled_frames[0].instances[:]
+        frame_0_instances.pop(4)
+        new_frame_0_instances = []
+        lf = corrected_label.labeled_frames[0]
 
-    for inst_0 in frame_0_instances:
-        pt_0 = np.array([inst_0.points[0].x, inst_0.points[0].y])
-        pts_1 = np.array([[inst.points[0].x, inst.points[0].y] 
-                        for inst in corrected_label.labeled_frames[1].instances])
-        distances = np.sqrt(np.sum((pts_1 - pt_0)**2, axis=1))
-        nearest_idx = np.argmin(distances)
-        
-        x, y = pt_0
-        point_dict = {'tb1_node': sleap.instance.Point(x=x, y=y)}
-        curr_track = corrected_label.tracks[track_name_to_idx[nearest_idx]]
-        tb_instance = sleap.Instance(skeleton=skl, points=point_dict, frame=lf, track=curr_track)
-        new_frame_0_instances.append(tb_instance)
+        for inst_0 in frame_0_instances:
+            pt_0 = np.array([inst_0.points[0].x, inst_0.points[0].y])
+            pts_1 = np.array([[inst.points[0].x, inst.points[0].y] 
+                            for inst in corrected_label.labeled_frames[1].instances])
+            distances = np.sqrt(np.sum((pts_1 - pt_0)**2, axis=1))
+            nearest_idx = np.argmin(distances)
+            
+            x, y = pt_0
+            point_dict = {'tb1_node': sleap.instance.Point(x=x, y=y)}
+            curr_track = corrected_label.tracks[track_name_to_idx[nearest_idx]]
+            tb_instance = sleap.Instance(skeleton=skl, points=point_dict, frame=lf, track=curr_track)
+            new_frame_0_instances.append(tb_instance)
 
-    corrected_label.labeled_frames[0].instances = new_frame_0_instances
+        corrected_label.labeled_frames[0].instances = new_frame_0_instances
 
-    # remove extract track
-    for track in corrected_label.tracks:
-        if track.name == 'track_17':
-            corrected_label.tracks.remove(track)
-            break
+        # remove extract track
+        for track in corrected_label.tracks:
+            if track.name == 'track_17':
+                corrected_label.tracks.remove(track)
+                break
         
     return corrected_label
