@@ -140,7 +140,6 @@ def get_id_mapping_array(all_tracked_points: np.ndarray) -> np.ndarray:
 def dataset_with_new_points(old_labels, new_points):
     corrected_label = copy(old_labels)
     skl = corrected_label.skeletons[0]
-    frame_cnt = len(corrected_label.labeled_frames)
     instance_cnt = len(corrected_label.labeled_frames[1].instances)
     
     track_name_to_idx = {}

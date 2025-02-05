@@ -24,14 +24,15 @@ def polygon_correction_with_points(all_tracked_points, polygon_constructor):
     id_mapping = id_mapping.copy()
     frame_cnt = all_tracked_points.shape[0]
     idx_range = np.arange(all_tracked_points.shape[1])
-    
+
     for frame_idx in range(1, frame_cnt):
-        polygon_order = polygon_constructor(all_tracked_points[frame_idx])
+        curr_frame_pts = all_tracked_points[frame_idx]
+        polygon_order = polygon_constructor(curr_frame_pts)
         prev_frame_indices = id_mapping[frame_idx-1]
-        best_shift = find_best_roll(polygon_order, prev_frame_indices)
-        shifted_indices = np.roll(polygon_order, best_shift)        
+        best_shift = find_best_roll(curr_frame_pts[polygon_order], all_tracked_points[frame_idx-1][prev_frame_indices])
+        shifted_indices = np.roll(polygon_order, best_shift)
         id_mapping[frame_idx] = idx_range[shifted_indices]
-        
+
     corrected_coords = get_corrected_coords(all_tracked_points, id_mapping)
     return corrected_coords
 
