@@ -137,10 +137,12 @@ def get_id_mapping_array(all_tracked_points: np.ndarray) -> np.ndarray:
     frame_cnt, pt_cnt = all_tracked_points.shape[:2]
     return np.tile(np.arange(pt_cnt), (frame_cnt, 1))
 
-def dataset_with_new_points(old_labels, new_points, handle_first_frame=True):
+def dataset_with_new_points(old_labels, new_points, node_name='tb1_node', handle_first_frame=True, start_idx=0):
     corrected_label = copy(old_labels)
     skl = corrected_label.skeletons[0]
+    print(skl)
     instance_cnt = len(corrected_label.labeled_frames[1].instances)
+    print(instance_cnt)
     
     track_name_to_idx = {}
     for trk_idx, trk in enumerate(old_labels.tracks):
@@ -148,14 +150,14 @@ def dataset_with_new_points(old_labels, new_points, handle_first_frame=True):
         track_name_to_idx[track_name] = trk_idx
     
     missing_pt_cnt = 0
-    for lf_idx, lf in enumerate(corrected_label.labeled_frames[1:], start=1):
+    for lf_idx, lf in enumerate(corrected_label.labeled_frames[start_idx:], start=start_idx):
         all_instances = []
         for inst_idx in range(instance_cnt):
             x, y = new_points[lf_idx - 1, inst_idx]
             if x + y == 0:
                 missing_pt_cnt += 1
                 continue
-            point_dict = {'tb1_node': sleap.instance.Point(x=x, y=y)}
+            point_dict = {node_name: sleap.instance.Point(x=x, y=y)}
             curr_track = corrected_label.tracks[track_name_to_idx[inst_idx]]
             curr_track_num = int(curr_track.name.split('_')[-1])
             if curr_track_num != inst_idx:
@@ -180,7 +182,7 @@ def dataset_with_new_points(old_labels, new_points, handle_first_frame=True):
             nearest_idx = np.argmin(distances)
             
             x, y = pt_0
-            point_dict = {'tb1_node': sleap.instance.Point(x=x, y=y)}
+            point_dict = {node_name: sleap.instance.Point(x=x, y=y)}
             curr_track = corrected_label.tracks[track_name_to_idx[nearest_idx]]
             tb_instance = sleap.Instance(skeleton=skl, points=point_dict, frame=lf, track=curr_track)
             new_frame_0_instances.append(tb_instance)
