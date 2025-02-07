@@ -63,3 +63,6 @@ def labeled_loss_from_indices(indices_path=non_missing_frame_indices_path):
         y_pred = tf.gather(y_pred, indices_tensor, axis=0)
         return tf.keras.losses.MeanSquaredError()(y_true, y_pred)
     return labeled_loss
+
+def temporal_pts_only_model():
+    pass
