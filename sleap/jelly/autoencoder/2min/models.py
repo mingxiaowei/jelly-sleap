@@ -4,7 +4,7 @@ from tensorflow.keras import layers, models, backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, ConvLSTM2D, LSTM, \
         Dense, Flatten, concatenate, Reshape, TimeDistributed, RepeatVector, \
-        MultiHeadAttention, LayerNormalization, Add, Conv2D, Conv1D, Multiply
+        MultiHeadAttention, LayerNormalization, Add, Conv2D, Conv1D, Multiply, Conv3D
 from tensorflow.keras.optimizers import Adam
 
 def masked_mse_loss(y_true, y_pred):
@@ -195,6 +195,43 @@ def get_model_6(window_size=5, coord_dim=34, latent_dim=32):
     decoded = Dense(coord_dim, activation='sigmoid')(x)
 
     model = Model(inputs, decoded)
+    model.summary()
+    
+    return model
+
+def get_model_7(window_size=5, video_shape=(170, 174, 1), coord_shape=34):
+    # Inputs
+    video_input = Input(shape=(window_size, *video_shape))  # (B, T, H, W, C)
+    coord_input = Input(shape=(window_size, coord_shape))   # (B, T, 34)
+    
+    # Video processing branch
+    x = Conv3D(16, (3, 3, 3), activation='relu', padding='same')(video_input)
+    x = Conv3D(32, (3, 3, 3), activation='relu', padding='same')(x)
+    video_features = Reshape((window_size, -1))(x)  # (B, T, D)
+    
+    # Coordinate processing branch
+    y = Dense(128, activation='relu')(coord_input)
+    y = Dense(256, activation='relu')(y)
+    coord_features = LayerNormalization()(y)
+    
+    # Cross-modal attention
+    attention_output = MultiHeadAttention(
+        num_heads=4,
+        key_dim=64,
+        value_dim=64
+    )(query=coord_features, key=video_features, value=video_features)
+    
+    # Feature fusion
+    merged = concatenate([coord_features, attention_output], axis=-1)
+    merged = Dense(512, activation='relu')(merged)
+    merged = LayerNormalization()(merged)
+    
+    # Temporal decoder
+    decoded = Dense(256, activation='relu')(merged)
+    decoded = Dense(128, activation='relu')(decoded)
+    coord_output = Dense(coord_shape, activation='sigmoid')(decoded)
+    
+    model = Model(inputs=[video_input, coord_input], outputs=coord_output)
     model.summary()
     
     return model
