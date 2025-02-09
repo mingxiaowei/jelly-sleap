@@ -164,6 +164,7 @@ def run_model_3(train_slice_only=True, window_size=5):
     
     denoised_coords = denoised_coords.reshape((-1, 17, 2))
     denoised_coords = denoised_coords * [170, 174]  # Scale back to original coordinates
+    denoised_coords = denoised_coords[window_size//2::window_size]
     
     return denoised_coords
 
@@ -195,3 +196,57 @@ def run_model_4(train_slice_only=True, window_size=5):
     denoised_coords = denoised_windows[:, window_size//2, :].reshape(-1, 17, 2) * [170, 174]
     
     return denoised_coords
+
+def load_data_5(slice_idx=2500, window_size=5):
+    coords = np.load('/home/mingxiao/Desktop/jellyfish/video/video_1_clips/manual_5min_c0_points.npy')
+    coords_normalized = (coords / np.array([170, 174])).reshape((9000, 34))
+    coords_windows = get_sliding_windows_3(coords_normalized, window_size=window_size)
+    
+    coords_sliced = coords_normalized[:slice_idx]
+    coords_windows_sliced = get_sliding_windows_3(coords_sliced, window_size=window_size)
+    
+    return coords_windows, coords_windows_sliced
+    
+def run_model_5(train_slice_only=True, window_size=5):
+    
+    X, X_sliced = load_data_5(window_size=window_size)
+    if train_slice_only:
+        X_train, X_val = split_train_val(X_sliced)
+    else:
+        X_train, X_val = split_train_val(X)
+    
+    model = get_model_5(window_size=window_size)
+    model.compile(optimizer="adam", loss=masked_mse_loss)
+    
+    model.fit(X_train, X_train, epochs=100, batch_size=32, validation_data=(X_val, X_val))
+    
+    denoised = model.predict(X)
+    improved_coords = denoised[:, window_size//2, :]  # Extract center frame
+    improved_coords = improved_coords.reshape(-1, 17, 2) * np.array([170, 174])
+    
+    return improved_coords
+
+def run_model_6(train_slice_only=True, window_size=5):
+    X, X_sliced = load_data_5(window_size=window_size)
+    if train_slice_only:
+        X_train, X_val = split_train_val(X_sliced)
+    else:
+        X_train, X_val = split_train_val(X)
+    
+    model = get_model_6(window_size=window_size)
+    model.compile(optimizer="adam", loss=masked_mse_loss)
+    
+    model.fit(
+        X_train, X_train,
+        epochs=100,
+        batch_size=32,
+        validation_data=(X_val, X_val),
+        # callbacks=[tf.keras.callbacks.EarlyStopping(patience=10)]
+    )
+
+    
+    denoised = model.predict(X)
+    improved_coords = denoised[:, window_size//2, :]  # Extract center frame
+    improved_coords = improved_coords.reshape(-1, 17, 2) * np.array([170, 174])
+    
+    return improved_coords

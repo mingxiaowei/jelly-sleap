@@ -4,7 +4,7 @@ from tensorflow.keras import layers, models, backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, ConvLSTM2D, LSTM, \
         Dense, Flatten, concatenate, Reshape, TimeDistributed, RepeatVector, \
-        MultiHeadAttention, LayerNormalization, Add
+        MultiHeadAttention, LayerNormalization, Add, Conv2D, Conv1D, Multiply
 from tensorflow.keras.optimizers import Adam
 
 def masked_mse_loss(y_true, y_pred):
@@ -104,7 +104,11 @@ def get_model_3(window_size=5, frame_shape=(170, 174, 1), coord_dim=34):
     z = LSTM(128, return_sequences=True)(z)
     coord_output = TimeDistributed(Dense(coord_dim, activation='sigmoid'))(z)
     
-    return Model(inputs=[video_input, coord_input], outputs=coord_output)
+    model = Model(inputs=[video_input, coord_input], outputs=coord_output)
+    model.compile(optimizer='adam', loss=masked_mse_loss)
+    model.summary()
+    
+    return model
 
 def get_model_4(window_size=5, frame_shape=(170, 174, 1), coord_dim=34):
     video_input = Input(shape=(window_size, *frame_shape))
@@ -137,4 +141,60 @@ def get_model_4(window_size=5, frame_shape=(170, 174, 1), coord_dim=34):
     z = LSTM(128, return_sequences=True)(z)
     coord_output = TimeDistributed(Dense(coord_dim, activation='sigmoid'))(z)
     
-    return Model(inputs=[video_input, coord_input], outputs=coord_output)
+    model = Model(inputs=[video_input, coord_input], outputs=coord_output)
+    model.compile(optimizer='adam', loss=masked_mse_loss)
+    model.summary()
+    
+    return model
+
+def get_model_5(window_size=5, coord_dim=34):
+    
+    # Input: (batch_size, window_size, 17*2)
+    inputs = Input(shape=(window_size, coord_dim))
+    
+    # Temporal encoder with dilated convolutions
+    x = Conv1D(64, 3, dilation_rate=1, padding="causal", activation="relu")(inputs)
+    x = LayerNormalization()(x)
+    x = Conv1D(128, 3, dilation_rate=2, padding="causal", activation="relu")(x)
+    x = LayerNormalization()(x)
+    x = Conv1D(256, 3, dilation_rate=4, padding="causal", activation="relu")(x)
+    x = LayerNormalization()(x)
+    
+    # Attention gate for temporal features
+    attn = Conv1D(256, 1, activation="sigmoid")(x)
+    x = Multiply()([x, attn])
+    
+    # Bottleneck with residual connection
+    encoded = Add()([x, Conv1D(256, 1)(x)])
+    encoded = LayerNormalization()(encoded)
+    
+    # Temporal decoder
+    x = Conv1D(128, 3, dilation_rate=2, padding="causal", activation="relu")(encoded)
+    x = LayerNormalization()(x)
+    x = Conv1D(64, 3, dilation_rate=1, padding="causal", activation="relu")(x)
+    x = LayerNormalization()(x)
+    
+    # Final reconstruction
+    decoded = Conv1D(coord_dim, 3, padding="same", activation="sigmoid")(x)
+    
+    model = Model(inputs, decoded)
+    model.compile(optimizer='adam', loss=masked_mse_loss)
+    model.summary()
+    
+    return model
+
+def get_model_6(window_size=5, coord_dim=34, latent_dim=32):
+    # simple feedforward autoencoder
+    inputs = Input(shape=(window_size, coord_dim))
+    x = Dense(128, activation='relu')(inputs)
+    x = Dense(64, activation='relu')(x)
+    encoded = Dense(latent_dim, activation='relu')(x)
+
+    x = Dense(64, activation='relu')(encoded)
+    x = Dense(128, activation='relu')(x)
+    decoded = Dense(coord_dim, activation='sigmoid')(x)
+
+    model = Model(inputs, decoded)
+    model.summary()
+    
+    return model
