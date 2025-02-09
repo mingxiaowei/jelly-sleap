@@ -243,10 +243,37 @@ def run_model_6(train_slice_only=True, window_size=5):
         validation_data=(X_val, X_val),
         # callbacks=[tf.keras.callbacks.EarlyStopping(patience=10)]
     )
-
     
     denoised = model.predict(X)
     improved_coords = denoised[:, window_size//2, :]  # Extract center frame
     improved_coords = improved_coords.reshape(-1, 17, 2) * np.array([170, 174])
     
     return improved_coords
+
+def run_model_7(train_slice_only=True, window_size=5):
+    # Force CPU usage
+    with tf.device('/CPU:0'):
+        coords_windows, frames_windows, coords_windows_sliced, frames_windows_sliced = load_data_3(window_size=window_size)
+        if train_slice_only:
+            coords_train, coords_val = split_train_val(coords_windows_sliced)
+            frames_train, frames_val = split_train_val(frames_windows_sliced)
+        else:
+            coords_train, coords_val = split_train_val(coords_windows)
+            frames_train, frames_val = split_train_val(frames_windows)
+        
+        model = get_model_7(window_size=window_size)
+        model.compile(optimizer='adam', loss=masked_mse_loss)
+        
+        model.fit(
+            [frames_train, coords_train], 
+            coords_train,  # Predict center frame
+            epochs=100,
+            batch_size=32,
+            validation_data=([frames_val, coords_val], coords_val)
+        )
+        
+        denoised = model.predict([frames_windows, coords_windows])
+        denoised_coords = denoised[:, window_size//2, :]  # Extract center frame
+        denoised_coords = denoised_coords.reshape(-1, 17, 2) * np.array([170, 174])
+        
+        return denoised_coords
