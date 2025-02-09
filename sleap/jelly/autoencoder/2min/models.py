@@ -42,7 +42,6 @@ def get_model_1(window_size=5):
     output = TimeDistributed(Dense(34, activation='sigmoid'))(x)
 
     model = Model(input_seq, output)
-    model.compile(optimizer='adam', loss=masked_mse_loss)
     model.summary()
     
     return model
@@ -75,7 +74,6 @@ def get_model_2(window_size=5):
     outputs_scaled = layers.Lambda(lambda x: x * norm_factors, name='denormalize')(outputs)
 
     model = models.Model(inputs, outputs_scaled, name='temporal_autoencoder')
-    model.compile(optimizer='adam', loss=masked_mse_loss)
     model.summary()
 
     return model
@@ -105,7 +103,6 @@ def get_model_3(window_size=5, frame_shape=(170, 174, 1), coord_dim=34):
     coord_output = TimeDistributed(Dense(coord_dim, activation='sigmoid'))(z)
     
     model = Model(inputs=[video_input, coord_input], outputs=coord_output)
-    model.compile(optimizer='adam', loss=masked_mse_loss)
     model.summary()
     
     return model
@@ -142,7 +139,6 @@ def get_model_4(window_size=5, frame_shape=(170, 174, 1), coord_dim=34):
     coord_output = TimeDistributed(Dense(coord_dim, activation='sigmoid'))(z)
     
     model = Model(inputs=[video_input, coord_input], outputs=coord_output)
-    model.compile(optimizer='adam', loss=masked_mse_loss)
     model.summary()
     
     return model
@@ -178,7 +174,6 @@ def get_model_5(window_size=5, coord_dim=34):
     decoded = Conv1D(coord_dim, 3, padding="same", activation="sigmoid")(x)
     
     model = Model(inputs, decoded)
-    model.compile(optimizer='adam', loss=masked_mse_loss)
     model.summary()
     
     return model
