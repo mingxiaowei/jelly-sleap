@@ -4,7 +4,7 @@ from tensorflow.keras import layers, models, backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, ConvLSTM2D, LSTM, \
         Dense, Flatten, concatenate, Reshape, TimeDistributed, RepeatVector, \
-        MultiHeadAttention, LayerNormalization, Add, Conv2D, Conv1D, Multiply, Conv3D
+        MultiHeadAttention, LayerNormalization, Add, Conv2D, Conv1D, Multiply, Conv3D, Embedding
 from tensorflow.keras.optimizers import Adam
 
 def masked_mse_loss(y_true, y_pred):
@@ -103,7 +103,6 @@ def get_model_3(window_size=5, frame_shape=(170, 174, 1), coord_dim=34):
     coord_output = TimeDistributed(Dense(coord_dim, activation='sigmoid'))(z)
     
     model = Model(inputs=[video_input, coord_input], outputs=coord_output)
-    model.summary()
     
     return model
 
@@ -227,6 +226,96 @@ def get_model_7(window_size=5, video_shape=(170, 174, 1), coord_shape=34):
     coord_output = Dense(coord_shape, activation='sigmoid')(decoded)
     
     model = Model(inputs=[video_input, coord_input], outputs=coord_output)
+    model.summary()
+    
+    return model
+
+class PositionalEncoding(tf.keras.layers.Layer):
+    def __init__(self, sequence_length, d_model):
+        super().__init__()
+        self.pos_encoding = self.positional_encoding(sequence_length, d_model)
+
+    def positional_encoding(self, length, depth):
+        depth = depth/2
+        positions = np.arange(length)[:, np.newaxis]
+        depths = np.arange(depth)[np.newaxis, :]/depth
+        angle_rates = 1 / (10000**depths)
+        angle_rads = positions * angle_rates
+        pos_encoding = np.concatenate([np.sin(angle_rads), np.cos(angle_rads)], axis=-1)
+        return tf.cast(pos_encoding, dtype=tf.float32)
+
+    def call(self, x):
+        return x + self.pos_encoding[tf.newaxis, :x.shape[1], :]
+
+def get_model_8(window_size=5, coord_dim=34, num_layers=2):
+    inputs = Input(shape=(window_size, coord_dim))
+    
+    # Positional Encoding
+    x = PositionalEncoding(window_size, coord_dim)(inputs)
+    
+    # Transformer Layers
+    for _ in range(num_layers):
+        # Self-Attention
+        attn = MultiHeadAttention(
+            num_heads=4,
+            key_dim=64,
+            value_dim=64
+        )(x, x)
+        attn = LayerNormalization()(x + attn)
+        
+        # Feed Forward
+        ffn = Dense(512, activation='relu')(attn)
+        ffn = Dense(coord_dim)(ffn)
+        x = LayerNormalization()(attn + ffn)
+    
+    # Final Denoising
+    outputs = Dense(coord_dim, activation='sigmoid')(x)
+    
+    model = Model(inputs, outputs)
+    model.summary()
+    
+    return model
+
+class LearnablePositionalEncoding(tf.keras.layers.Layer):
+    def __init__(self, window_size, coord_dim):
+        super().__init__()
+        self.position_emb = Embedding(
+            input_dim=window_size, 
+            output_dim=coord_dim
+        )
+        self.window_size = window_size
+        
+    def call(self, x):
+        positions = tf.range(start=0, limit=self.window_size, delta=1)
+        positions = tf.expand_dims(positions, axis=0)  # (1, window_size)
+        pos_emb = self.position_emb(positions)  # (1, window_size, coord_dim)
+        return x + pos_emb
+
+def get_model_9(window_size=5, coord_dim=34, num_layers=2):
+    inputs = Input(shape=(window_size, coord_dim))
+    
+    # 1. Learned Positional Embeddings
+    x = LearnablePositionalEncoding(window_size, coord_dim)(inputs)
+    
+    for _ in range(num_layers):
+        # 2. Transformer Encoder Layer
+        attn = MultiHeadAttention(
+            num_heads=4,
+            key_dim=64,
+            value_dim=64
+        )(x, x)
+        x = LayerNormalization()(x + attn)
+        
+        # 3. Feed-Forward Network
+        ffn = Dense(512, activation='relu')(x)
+        ffn = Dense(coord_dim)(ffn)
+        x = LayerNormalization()(x + ffn)
+    
+    # 4. Center Frame Prediction
+    center_idx = window_size // 2
+    outputs = Dense(coord_dim, activation='sigmoid')(x[:, center_idx, :])
+    
+    model = Model(inputs, outputs)
     model.summary()
     
     return model

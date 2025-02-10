@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, models, backend as K
 from tensorflow.keras.layers import Input, LSTM, RepeatVector, TimeDistributed, Dense
 from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam, AdamW
 from models import *
 from load_data_2min import load_video
 
@@ -12,24 +12,29 @@ def split_train_val(X, train_size=0.8):
     X_train, X_val = X[:train_size], X[train_size:]
     return X_train, X_val
 
-def load_points(slice_idx=None):
+def load_points(slice_idx=None, shuffle=True):
     coords_corrected = np.load('/home/mingxiao/Desktop/jellyfish/video/video_1_clips/manual_5min_c0_points.npy')
     coords_raw = np.load('/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_raw_points.npy')
+    if shuffle:
+        indices = np.arange(len(coords_raw))
+        np.random.shuffle(indices)
+        coords_raw = coords_raw[indices]
+        coords_corrected = coords_corrected[indices]
     if slice_idx is None:
         return coords_raw, coords_corrected
     else:
         return coords_raw, coords_raw[:slice_idx], coords_corrected, coords_corrected[:slice_idx]
 
-def load_data(window_getter, slice_idx=2500, window_size=5):
-    coords_raw, coords_raw_sliced, coords_corrected, coords_corrected_sliced = load_points(slice_idx)
+def load_data(window_getter, slice_idx=2500, window_size=5, shuffle=True):
+    coords_raw, coords_raw_sliced, coords_corrected, coords_corrected_sliced = load_points(slice_idx, shuffle)
     X = window_getter(coords_raw, window_size=window_size, flat_len=9000)
     X_sliced = window_getter(coords_raw_sliced, window_size=window_size, flat_len=slice_idx)
     y = window_getter(coords_corrected, window_size=window_size, flat_len=9000)
     y_sliced = window_getter(coords_corrected_sliced, window_size=window_size, flat_len=slice_idx)
     return X, X_sliced, y, y_sliced
 
-def load_data_1(slice_idx=2500, window_size=5):
-    return load_data(get_sliding_windows_1, slice_idx, window_size)
+def load_data_1(slice_idx=2500, window_size=5, shuffle=True):
+    return load_data(get_sliding_windows_1, slice_idx, window_size, shuffle)
 
 def get_sliding_windows_1(coords, window_size=5, flat_len=2500):
     coords_normalized = coords.astype('float32') / [170, 174]
@@ -209,7 +214,6 @@ def run_model_4(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
         
     model = get_model_4(window_size=window_size)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
-    model.summary()
     
     model.fit(
         [frames_train, coords_raw_train], coords_corrected_train,
@@ -293,7 +297,7 @@ def run_model_6(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
     
     return improved_coords
 
-def run_model_7(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam'):
+def run_model_7(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', model_save_path=None):
     # Force CPU usage
     with tf.device('/CPU:0'):
         coords_raw_windows, coords_corrected_windows, frames_windows, \
@@ -318,11 +322,53 @@ def run_model_7(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
             coords_corrected_train,  
             epochs=epochs,
             batch_size=batch_size,
-            validation_data=([frames_val, coords_raw_val], coords_corrected_val)
+            validation_data=([frames_val, coords_raw_val], coords_corrected_val),
+            callbacks=[
+                tf.keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True)
+            ]
         )
+        if model_save_path is not None:
+            model.save(model_save_path)
         
         denoised = model.predict([frames_windows, coords_raw_windows])
         denoised_coords = denoised[:, window_size//2, :]  # Extract center frame
         denoised_coords = denoised_coords.reshape(-1, 17, 2) * np.array([170, 174])
         
         return denoised_coords
+    
+def run_model_8(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.85, num_layers=2, shuffle=True):
+    X, X_sliced, y, y_sliced = load_data_1(window_size=window_size, shuffle=shuffle)
+    if train_slice_only:
+        X_train, X_val = split_train_val(X_sliced, split_size)
+        y_train, y_val = split_train_val(y_sliced, split_size)
+    else:
+        X_train, X_val = split_train_val(X, split_size)
+        y_train, y_val = split_train_val(y, split_size)
+    
+    model = get_model_8(window_size=window_size, num_layers=num_layers)
+    model.compile(optimizer=optimizer, loss=masked_mse_loss)
+    
+    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val))
+    
+    denoised_windows = model.predict(X)
+    improved_coords = denoised_windows[:, window_size//2, :].reshape(-1, 17, 2) * np.array([170, 174])
+    
+    return improved_coords
+
+def run_model_9(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.85, num_layers=2, shuffle=True):
+    X, X_sliced, y, y_sliced = load_data_1(window_size=window_size, shuffle=shuffle)
+    if train_slice_only:
+        X_train, X_val = split_train_val(X_sliced, split_size)
+        y_train, y_val = split_train_val(y_sliced, split_size)
+    else:
+        X_train, X_val = split_train_val(X, split_size)
+        y_train, y_val = split_train_val(y, split_size)
+    
+    model = get_model_9(window_size=window_size, num_layers=num_layers)
+    model.compile(optimizer=optimizer, loss=masked_mse_loss)
+    
+    model.fit(X_train, y_train[:, window_size//2, :], epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val[:, window_size//2, :]))
+    
+    denoised_coords = model.predict(X)
+    
+    return denoised_coords
