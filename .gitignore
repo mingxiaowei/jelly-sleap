@@ -118,4 +118,4 @@ venv.bak/
 # OS generated files
 .DS_Store
 
-sleap/jelly/autoencoder/2min/results/
+sleap/jelly/autoencoder/results/
