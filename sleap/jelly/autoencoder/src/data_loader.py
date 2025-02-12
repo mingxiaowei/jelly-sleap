@@ -87,16 +87,19 @@ def get_dropout_mask(frame_cnt, pt_cnt, dropout_rate=0.01):
 
 def augment_points(coords, dropout_rate=0.01, swap_rate=0.005):
     frame_cnt, pt_cnt = coords.shape[:2]
+    
     # 1. dropout
     dropout_mask = get_dropout_mask(frame_cnt, pt_cnt, dropout_rate)
     # coords[dropout_mask == 1] = np.nan
     coords[dropout_mask == 1] = 0
+    
     # 2. swap
     swap_frames = np.random.choice(frame_cnt, int(frame_cnt * swap_rate), replace=False)
     for frame_idx in swap_frames:
         swap_pts = np.random.choice(pt_cnt, np.random.randint(2, 5), replace=False)
         swap_pts_shuffled = np.random.permutation(swap_pts)
         coords[frame_idx, swap_pts] = coords[frame_idx, swap_pts_shuffled]
+        
     return coords
 
 def split_train_val(*data, train_size=0.8):
@@ -119,14 +122,16 @@ def load_data(
     augment=False, 
     dropout_rate=0.01,
     swap_rate=0.005, 
-    train_size=0.9,
+    split_size=0.9,
     ):
     coords_raw, coords_corrected = load_points(raw_points_path=raw_points_path, 
                                                corrected_points_path=corrected_points_path)
 
     # 1. augment
     if augment:
-        coords_augmented= augment_points(coords_corrected.copy(), dropout_rate, swap_rate)
+        coords_augmented = augment_points(coords_corrected.copy(), dropout_rate, swap_rate)
+    # coords_corrected = mean_interpolate(coords_corrected)
+    coords_augmented = mean_interpolate(coords_augmented, coords_corrected)
     # 2. get window
     coords_corrected_windows, coords_augmented_windows = get_windows_wrapper(
                                                             [coords_corrected, coords_augmented], 
@@ -141,16 +146,25 @@ def load_data(
     coords_augmented_windows = coords_augmented_windows[indices]
     # 4. train val split
     X_train, X_val, y_train, y_val = split_train_val(coords_augmented_windows, coords_corrected_windows, 
-                                                     train_size=train_size)
+                                                     train_size=split_size)
     
     if load_video:
         video = video_loader(video_path=video_path, target_size=None, load_as_tensor=load_as_tensor)
         video_windows = get_sliding_windows(video, window_size=window_size)
         video_original = video_windows
         video_windows = video_windows[indices]
-        video_train, video_val = split_train_val(video_windows, train_size=train_size)
+        video_train, video_val = split_train_val(video_windows, train_size=split_size)
         X_train = [video_train, X_train]
         X_val = [video_val, X_val]
         X = [video_original, X]
         
     return X_train, X_val, y_train, y_val, X
+
+def mean_interpolate(coords_augmented, coords_corrected):
+    non_missing_indices = np.where(coords_augmented != 0)
+    non_missing_coords = coords_corrected[non_missing_indices]
+    mean_coords = np.mean(non_missing_coords, axis=0)
+    
+    augmented_missing_indices = np.where(coords_augmented == 0)
+    coords_augmented[augmented_missing_indices] = mean_coords   
+    return coords_augmented

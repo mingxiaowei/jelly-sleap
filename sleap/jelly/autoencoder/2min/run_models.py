@@ -5,6 +5,7 @@ from models import *
 import sys
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/autoencoder/src')
 from data_loader import load_data
+from model_classes import *
 
 def model_runner(model, *data, 
                  epochs=50, 
@@ -33,22 +34,9 @@ def run_model_1(train_slice_only=True, window_size=5, epochs=50, batch_size=32, 
     
     X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
         
-    model = get_model_1(window_size=window_size)
-    model.compile(optimizer=optimizer, loss=masked_mse_loss)
-    model.summary()
-    model.fit(X_train, y_train, 
-              epochs=epochs, 
-              batch_size=batch_size, 
-              validation_data=(X_val, y_val),
-              callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)])
-
-    denoised_windows = model.predict(X)
-    denoised_coords = denoised_windows[:, window_size // 2, :]  # Extract middle frame
-
-    denoised_coords = denoised_coords.reshape((-1, 17, 2))
-    denoised_coords = denoised_coords * [170, 174]  # Scale back to original coordinates
+    model = Model1(window_size=window_size)
     
-    return denoised_coords
+    return model_runner(model, X_train, X_val, y_train, y_val, X, epochs=epochs, batch_size=batch_size, optimizer=optimizer)
 
 def load_data_2(slice_idx=2500, window_size=5):
     return load_data(get_sliding_windows_2, slice_idx, window_size)
@@ -261,9 +249,7 @@ def run_model_7(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
             epochs=epochs,
             batch_size=batch_size,
             validation_data=(X_val, y_val),
-            callbacks=[
-                tf.keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True)
-            ]
+            callbacks=[tf.keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True, verbose=1)]
         )
         if model_save_path is not None:
             model.save(model_save_path)
@@ -274,7 +260,7 @@ def run_model_7(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
         
         return denoised_coords
     
-def run_model_8(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.85, num_layers=2, shuffle=True):
+def run_model_8(window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.85, num_layers=2, shuffle=True):
     X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=True)
     
     model = get_model_8(window_size=window_size, num_layers=num_layers)
@@ -292,8 +278,17 @@ def run_model_8(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
     
     return improved_coords
 
-def run_model_9(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.85, num_layers=2, shuffle=True):
-    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
+def run_model_9(window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.9, num_layers=2, shuffle=True,
+                dropout_rate=0.01, swap_rate=0.005):
+    X_train, X_val, y_train, y_val, X = load_data(
+        window_size=window_size, 
+        augment=True, 
+        load_video=False, 
+        split_size=split_size, 
+        shuffle=shuffle, 
+        dropout_rate=dropout_rate, 
+        swap_rate=swap_rate,
+    )
     
     model = get_model_9(window_size=window_size, num_layers=num_layers)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
