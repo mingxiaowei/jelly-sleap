@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import tensorflow as tf
 
-video_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_high_res_10min_track_reencoded.mp4"
+video_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_high_res_5min_track_reencoded_0.mp4"
 corrected_points_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/manual_5min_c0_points.npy'
 raw_points_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_raw_points.npy'
 

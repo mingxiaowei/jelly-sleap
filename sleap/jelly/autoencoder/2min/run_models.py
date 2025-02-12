@@ -6,6 +6,29 @@ import sys
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/autoencoder/src')
 from data_loader import load_data
 
+def model_runner(model, *data, 
+                 epochs=50, 
+                 batch_size=32, 
+                 optimizer='adam',
+                 loss=masked_mse_loss,
+                 callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)],
+                 save_path=None,
+                 save_affix=None):
+    
+    model.compile(optimizer=optimizer, loss=loss)
+    model.summary()
+    X_train, X_val, y_train, y_val, X = data
+    
+    model.fit(X_train, y_train, 
+              epochs=epochs, 
+              batch_size=batch_size, 
+              validation_data=(X_val, y_val),
+              callbacks=callbacks)
+    
+    predictions = model.predict(X)
+    predictions = model.postprocess(predictions)
+    return predictions
+
 def run_model_1(train_slice_only=True, window_size=5, epochs=50, batch_size=32, optimizer='adam'):
     
     X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
@@ -55,7 +78,7 @@ def reconstruct_full_sequence(predicted_seqs, num_frames=9000):
 
 def run_model_2(train_slice_only=True, window_size=5, epochs=50, batch_size=32, optimizer='adam'):
     
-    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False, flatten=False)
     
     model = get_model_2(window_size=window_size)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
@@ -270,7 +293,7 @@ def run_model_8(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
     return improved_coords
 
 def run_model_9(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.85, num_layers=2, shuffle=True):
-    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=True)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
     
     model = get_model_9(window_size=window_size, num_layers=num_layers)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
@@ -279,7 +302,7 @@ def run_model_9(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
     model.fit(X_train, y_train[:, window_size//2, :], 
               epochs=epochs, batch_size=batch_size, 
               validation_data=(X_val, y_val[:, window_size//2, :]),
-              callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)])
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=1)])
     
     denoised_coords = model.predict(X)
     denoised_coords = denoised_coords.reshape((-1, 17, 2)) * np.array([170, 174])
