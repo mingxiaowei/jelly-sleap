@@ -370,5 +370,5 @@ def run_model_9(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
     model.fit(X_train, y_train[:, window_size//2, :], epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val[:, window_size//2, :]))
     
     denoised_coords = model.predict(X)
-    
+    denoised_coords = denoised_coords.reshape((-1, 17, 2)) * np.array([170, 174])
     return denoised_coords
