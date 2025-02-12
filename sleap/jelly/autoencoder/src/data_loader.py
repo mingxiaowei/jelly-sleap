@@ -11,12 +11,12 @@ def load_points(raw_points_path=raw_points_path, corrected_points_path=corrected
     coords_raw = np.load(raw_points_path).astype('float32')
     
     # Replace (0,0) coordinates with (nan, nan)
-    coords_corrected[(coords_corrected == 0).all(axis=2)] = np.nan
-    coords_raw[(coords_raw == 0).all(axis=2)] = np.nan
+    # coords_corrected[(coords_corrected == 0).all(axis=2)] = np.nan
+    # coords_raw[(coords_raw == 0).all(axis=2)] = np.nan
     
     return coords_raw, coords_corrected
 
-def load_video(video_path=video_path, target_size=None, load_as_tensor=False):
+def video_loader(video_path=video_path, target_size=None, load_as_tensor=False):
     """
     Load an MP4 video into a numpy array (grayscale).
     
@@ -64,12 +64,15 @@ def get_sliding_windows(data, window_size=5):
         windows.append(window)
     return np.array(windows)
 
-def get_windows_wrapper(coords_list, window_size=5, normalizer=(170, 174)):
+def get_windows_wrapper(coords_list, window_size=5, normalizer=(170, 174), flatten=True):
     coords_windows = []
     for coords in coords_list:
         coords_normalized = coords / normalizer
-        coords_flat = coords_normalized.reshape((len(coords), -1))
-        coords_windows.append(get_sliding_windows(coords_flat, window_size=window_size))
+        if flatten:
+            coords_flat = coords_normalized.reshape((len(coords), -1))
+            coords_windows.append(get_sliding_windows(coords_flat, window_size=window_size))
+        else:
+            coords_windows.append(get_sliding_windows(coords_normalized, window_size=window_size))
     return coords_windows
 
 def get_dropout_mask(frame_cnt, pt_cnt, dropout_rate=0.01):
@@ -86,7 +89,8 @@ def augment_points(coords, dropout_rate=0.01, swap_rate=0.005):
     frame_cnt, pt_cnt = coords.shape[:2]
     # 1. dropout
     dropout_mask = get_dropout_mask(frame_cnt, pt_cnt, dropout_rate)
-    coords[dropout_mask == 1] = np.nan
+    # coords[dropout_mask == 1] = np.nan
+    coords[dropout_mask == 1] = 0
     # 2. swap
     swap_frames = np.random.choice(frame_cnt, int(frame_cnt * swap_rate), replace=False)
     for frame_idx in swap_frames:
@@ -110,6 +114,7 @@ def load_data(
     load_video=False,
     window_size=5,
     load_as_tensor=False,
+    flatten=True,
     shuffle=True,
     augment=False, 
     dropout_rate=0.01,
@@ -118,12 +123,16 @@ def load_data(
     ):
     coords_raw, coords_corrected = load_points(raw_points_path=raw_points_path, 
                                                corrected_points_path=corrected_points_path)
-    frame_cnt, pt_cnt = coords_corrected.shape[:2]
+
     # 1. augment
     if augment:
         coords_augmented= augment_points(coords_corrected.copy(), dropout_rate, swap_rate)
     # 2. get window
-    coords_corrected_windows, coords_augmented_windows = get_windows_wrapper([coords_corrected, coords_augmented], window_size)
+    coords_corrected_windows, coords_augmented_windows = get_windows_wrapper(
+                                                            [coords_corrected, coords_augmented], 
+                                                            window_size=window_size, 
+                                                            flatten=flatten)
+    X = coords_corrected_windows
     # 3. shuffle
     indices = np.arange(len(coords_corrected_windows))
     if shuffle:
@@ -135,14 +144,13 @@ def load_data(
                                                      train_size=train_size)
     
     if load_video:
-        video = load_video(video_path=video_path, target_size=None, load_as_tensor=load_as_tensor)
-        video = video[indices]
+        video = video_loader(video_path=video_path, target_size=None, load_as_tensor=load_as_tensor)
         video_windows = get_sliding_windows(video, window_size=window_size)
+        video_original = video_windows
         video_windows = video_windows[indices]
         video_train, video_val = split_train_val(video_windows, train_size=train_size)
         X_train = [video_train, X_train]
         X_val = [video_val, X_val]
-        y_train = [video_train, y_train]
-        y_val = [video_val, y_val]
+        X = [video_original, X]
         
-    return X_train, X_val, y_train, y_val
+    return X_train, X_val, y_train, y_val, X

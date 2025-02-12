@@ -15,6 +15,9 @@ def masked_mse_loss(y_true, y_pred):
     # Create a mask: valid points get 1; missing points (0,0) get 0.
     is_missing = tf.logical_and(tf.equal(y_true[..., 0], 0.0),
                                 tf.equal(y_true[..., 1], 0.0))
+    # is_missing = tf.math.logical_or(
+    #     tf.math.is_nan(y_true[..., 0]),
+    #     tf.math.is_nan(y_true[..., 1]))
     mask = tf.cast(tf.logical_not(is_missing), tf.float32)  # Shape: (batch, seq_len, 17)
     
     # Compute squared error per coordinate pair.

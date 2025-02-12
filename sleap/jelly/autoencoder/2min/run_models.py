@@ -1,74 +1,23 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers, models, backend as K
-from tensorflow.keras.layers import Input, LSTM, RepeatVector, TimeDistributed, Dense
-from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import Adam, AdamW
 from models import *
-from load_data_2min import load_video
 
-def split_train_val(X, train_size=0.8):
-    train_size = int(train_size * len(X))
-    X_train, X_val = X[:train_size], X[train_size:]
-    return X_train, X_val
-
-def load_points(slice_idx=None, shuffle=True):
-    coords_corrected = np.load('/home/mingxiao/Desktop/jellyfish/video/video_1_clips/manual_5min_c0_points.npy')
-    coords_raw = np.load('/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_raw_points.npy')
-    if shuffle:
-        indices = np.arange(len(coords_raw))
-        np.random.shuffle(indices)
-        coords_raw = coords_raw[indices]
-        coords_corrected = coords_corrected[indices]
-    if slice_idx is None:
-        return coords_raw, coords_corrected
-    else:
-        return coords_raw, coords_raw[:slice_idx], coords_corrected, coords_corrected[:slice_idx]
-
-def load_data(window_getter, slice_idx=2500, window_size=5, shuffle=True):
-    coords_raw, coords_raw_sliced, coords_corrected, coords_corrected_sliced = load_points(slice_idx, shuffle)
-    X = window_getter(coords_raw, window_size=window_size, flat_len=9000)
-    X_sliced = window_getter(coords_raw_sliced, window_size=window_size, flat_len=slice_idx)
-    y = window_getter(coords_corrected, window_size=window_size, flat_len=9000)
-    y_sliced = window_getter(coords_corrected_sliced, window_size=window_size, flat_len=slice_idx)
-    return X, X_sliced, y, y_sliced
-
-def load_data_1(slice_idx=2500, window_size=5, shuffle=True):
-    return load_data(get_sliding_windows_1, slice_idx, window_size, shuffle)
-
-def get_sliding_windows_1(coords, window_size=5, flat_len=2500):
-    coords_normalized = coords.astype('float32') / [170, 174]
-    coords_flat = coords_normalized.reshape((flat_len, -1))
-    X = []
-    first_half_window = window_size // 2
-    second_half_window = window_size - first_half_window
-    for i in range(coords_flat.shape[0]):
-        start = max(0, i - first_half_window)
-        end = min(coords_flat.shape[0], i + second_half_window)
-        pad_before = max(0, first_half_window - i)
-        pad_after = max(0, (i + second_half_window) - coords_flat.shape[0])
-    
-        window = coords_flat[start:end]
-        if pad_before > 0 or pad_after > 0:
-            window = np.pad(window, ((pad_before, pad_after), (0, 0)), mode='constant')
-        X.append(window)
-
-    return np.array(X)
+import sys
+sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/autoencoder/src')
+from data_loader import load_data
 
 def run_model_1(train_slice_only=True, window_size=5, epochs=50, batch_size=32, optimizer='adam'):
     
-    X, X_sliced, y, y_sliced = load_data_1(window_size=window_size)
-    
-    if train_slice_only:
-        X_train, X_val = split_train_val(X_sliced)
-        y_train, y_val = split_train_val(y_sliced)
-    else:
-        X_train, X_val = split_train_val(X)
-        y_train, y_val = split_train_val(y)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
         
     model = get_model_1(window_size=window_size)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
-    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val))
+    model.summary()
+    model.fit(X_train, y_train, 
+              epochs=epochs, 
+              batch_size=batch_size, 
+              validation_data=(X_val, y_val),
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)])
 
     denoised_windows = model.predict(X)
     denoised_coords = denoised_windows[:, window_size // 2, :]  # Extract middle frame
@@ -106,17 +55,16 @@ def reconstruct_full_sequence(predicted_seqs, num_frames=9000):
 
 def run_model_2(train_slice_only=True, window_size=5, epochs=50, batch_size=32, optimizer='adam'):
     
-    X, X_sliced, y, y_sliced = load_data_2(window_size=window_size)
-    if train_slice_only:
-        X_train, X_val = split_train_val(X_sliced)
-        y_train, y_val = split_train_val(y_sliced)
-    else:
-        X_train, X_val = split_train_val(X)
-        y_train, y_val = split_train_val(y)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
     
     model = get_model_2(window_size=window_size)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
-    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val))
+    model.summary()
+    model.fit(X_train, y_train, 
+              epochs=epochs, 
+              batch_size=batch_size, 
+              validation_data=(X_val, y_val),
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)])
 
     denoised_windows = model.predict(X)
     denoised_coords = reconstruct_full_sequence(denoised_windows)
@@ -133,7 +81,7 @@ def get_sliding_windows_3(data, window_size=5):
         pad_before = max(0, first_half_window - i)
         pad_after = max(0, (i + second_half_window) - len(data))
         window = data[start:end]
-        window = np.pad(window, ((pad_before, pad_after), *[(0,0)]*(len(data.shape)-1)), mode='constant')
+        window = np.pad(window, ((pad_before, pad_after), *[(0,0)]*(len(data.shape)-1)), mode='edge')
         windows.append(window)
     return np.array(windows)
 
@@ -168,17 +116,7 @@ def load_data_3(slice_idx=2500, window_size=5):
         coords_raw_windows_sliced, coords_corrected_windows_sliced, frames_windows_sliced
 
 def run_model_3(train_slice_only=True, window_size=5, epochs=50, batch_size=32, optimizer='adam'):  
-    coords_raw_windows, coords_corrected_windows, frames_windows, \
-        coords_raw_windows_sliced, coords_corrected_windows_sliced, frames_windows_sliced = load_data_3(window_size=window_size)
-        
-    if train_slice_only:
-        coords_raw_train, coords_raw_val = split_train_val(coords_raw_windows_sliced)
-        coords_corrected_train, coords_corrected_val = split_train_val(coords_corrected_windows_sliced)
-        frames_train, frames_val = split_train_val(frames_windows_sliced)
-    else:
-        coords_raw_train, coords_raw_val = split_train_val(coords_raw_windows)
-        coords_corrected_train, coords_corrected_val = split_train_val(coords_corrected_windows)
-        frames_train, frames_val = split_train_val(frames_windows)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=True)
     
     model = get_model_3(window_size=window_size)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
@@ -186,13 +124,14 @@ def run_model_3(train_slice_only=True, window_size=5, epochs=50, batch_size=32, 
 
     # Train the model
     model.fit(
-        [frames_train, coords_raw_train], coords_corrected_train,
-        validation_data=([frames_val, coords_raw_val], coords_corrected_val),
+        X_train, y_train,
+        validation_data=(X_val, y_val),
         epochs=epochs,
-        batch_size=batch_size
+        batch_size=batch_size,
+        callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)]
     )
     
-    denoised_coords = model.predict([frames_windows, coords_raw_windows])
+    denoised_coords = model.predict(X)
     
     denoised_coords = denoised_coords.reshape((-1, 17, 2))
     denoised_coords = denoised_coords * [170, 174]  # Scale back to original coordinates
@@ -201,23 +140,15 @@ def run_model_3(train_slice_only=True, window_size=5, epochs=50, batch_size=32, 
     return denoised_coords
 
 def run_model_4(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam'):
-    coords_raw_windows, coords_corrected_windows, frames_windows, \
-        coords_raw_windows_sliced, coords_corrected_windows_sliced, frames_windows_sliced = load_data_3(window_size=window_size)
-    if train_slice_only:
-        coords_raw_train, coords_raw_val = split_train_val(coords_raw_windows_sliced)
-        coords_corrected_train, coords_corrected_val = split_train_val(coords_corrected_windows_sliced)
-        frames_train, frames_val = split_train_val(frames_windows_sliced)
-    else:
-        coords_raw_train, coords_raw_val = split_train_val(coords_raw_windows)
-        coords_corrected_train, coords_corrected_val = split_train_val(coords_corrected_windows)
-        frames_train, frames_val = split_train_val(frames_windows)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=True)
         
     model = get_model_4(window_size=window_size)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
+    model.summary()
     
     model.fit(
-        [frames_train, coords_raw_train], coords_corrected_train,
-        validation_data=([frames_val, coords_raw_val], coords_corrected_val),
+        X_train, y_train,
+        validation_data=(X_val, y_val),
         epochs=epochs,
         batch_size=batch_size,
         callbacks=[
@@ -226,7 +157,7 @@ def run_model_4(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
     )
 
     # Generate improved coordinates
-    denoised_windows = model.predict([frames_windows, coords_raw_windows])
+    denoised_windows = model.predict(X)
     denoised_coords = denoised_windows[:, window_size//2, :].reshape(-1, 17, 2) * [170, 174]
     
     return denoised_coords
@@ -253,18 +184,17 @@ def load_data_5(slice_idx=2500, window_size=5):
     
 def run_model_5(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam'):
     
-    X, X_sliced, y, y_sliced = load_data_5(window_size=window_size)
-    if train_slice_only:
-        X_train, X_val = split_train_val(X_sliced)
-        y_train, y_val = split_train_val(y_sliced)
-    else:
-        X_train, X_val = split_train_val(X)
-        y_train, y_val = split_train_val(y)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
         
     model = get_model_5(window_size=window_size)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
+    model.summary()
     
-    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val))
+    model.fit(X_train, y_train, 
+              epochs=epochs, 
+              batch_size=batch_size, 
+              validation_data=(X_val, y_val),
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)])
     
     denoised = model.predict(X)
     improved_coords = denoised[:, window_size//2, :]  # Extract center frame
@@ -273,22 +203,19 @@ def run_model_5(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
     return improved_coords
 
 def run_model_6(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam'):
-    X, X_sliced, y, y_sliced = load_data_5(window_size=window_size)
-    if train_slice_only:
-        X_train, X_val = split_train_val(X_sliced)
-        y_train, y_val = split_train_val(y_sliced)
-    else:
-        X_train, X_val = split_train_val(X)
-        y_train, y_val = split_train_val(y)
+    
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=False)
+    
     model = get_model_6(window_size=window_size)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
+    model.summary()
     
     model.fit(
         X_train, y_train,
         epochs=epochs,
         batch_size=batch_size,
         validation_data=(X_val, y_val),
-        # callbacks=[tf.keras.callbacks.EarlyStopping(patience=10)]
+        callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)]
     )
     
     denoised = model.predict(X)
@@ -300,29 +227,17 @@ def run_model_6(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
 def run_model_7(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', model_save_path=None):
     # Force CPU usage
     with tf.device('/CPU:0'):
-        coords_raw_windows, coords_corrected_windows, frames_windows, \
-            coords_raw_windows_sliced, coords_corrected_windows_sliced, frames_windows_sliced = load_data_3(window_size=window_size)
-        if train_slice_only:
-            coords_raw_train, coords_raw_val = split_train_val(coords_raw_windows_sliced)
-            coords_corrected_train, coords_corrected_val = split_train_val(coords_corrected_windows_sliced)
-            frames_train, frames_val = split_train_val(frames_windows_sliced)
-        else:
-            coords_raw_train, coords_raw_val = split_train_val(coords_raw_windows)
-            coords_corrected_train, coords_corrected_val = split_train_val(coords_corrected_windows)
-            frames_train, frames_val = split_train_val(frames_windows)
+        X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=True)   
         
         model = get_model_7(window_size=window_size)
-        if train_slice_only:
-            model.compile(optimizer=optimizer, loss='mse')
-        else:
-            model.compile(optimizer=optimizer, loss=masked_mse_loss)
+        model.compile(optimizer=optimizer, loss=masked_mse_loss)
+        model.summary()
         
         model.fit(
-            [frames_train, coords_raw_train], 
-            coords_corrected_train,  
+            X_train, y_train,
             epochs=epochs,
             batch_size=batch_size,
-            validation_data=([frames_val, coords_raw_val], coords_corrected_val),
+            validation_data=(X_val, y_val),
             callbacks=[
                 tf.keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True)
             ]
@@ -330,25 +245,24 @@ def run_model_7(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
         if model_save_path is not None:
             model.save(model_save_path)
         
-        denoised = model.predict([frames_windows, coords_raw_windows])
+        denoised = model.predict(X)
         denoised_coords = denoised[:, window_size//2, :]  # Extract center frame
         denoised_coords = denoised_coords.reshape(-1, 17, 2) * np.array([170, 174])
         
         return denoised_coords
     
 def run_model_8(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.85, num_layers=2, shuffle=True):
-    X, X_sliced, y, y_sliced = load_data_1(window_size=window_size, shuffle=shuffle)
-    if train_slice_only:
-        X_train, X_val = split_train_val(X_sliced, split_size)
-        y_train, y_val = split_train_val(y_sliced, split_size)
-    else:
-        X_train, X_val = split_train_val(X, split_size)
-        y_train, y_val = split_train_val(y, split_size)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=True)
     
     model = get_model_8(window_size=window_size, num_layers=num_layers)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
+    model.summary()
     
-    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val))
+    model.fit(X_train, y_train, 
+              epochs=epochs, 
+              batch_size=batch_size, 
+              validation_data=(X_val, y_val),
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)])
     
     denoised_windows = model.predict(X)
     improved_coords = denoised_windows[:, window_size//2, :].reshape(-1, 17, 2) * np.array([170, 174])
@@ -356,18 +270,16 @@ def run_model_8(train_slice_only=True, window_size=5, epochs=100, batch_size=32,
     return improved_coords
 
 def run_model_9(train_slice_only=True, window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.85, num_layers=2, shuffle=True):
-    X, X_sliced, y, y_sliced = load_data_1(window_size=window_size, shuffle=shuffle)
-    if train_slice_only:
-        X_train, X_val = split_train_val(X_sliced, split_size)
-        y_train, y_val = split_train_val(y_sliced, split_size)
-    else:
-        X_train, X_val = split_train_val(X, split_size)
-        y_train, y_val = split_train_val(y, split_size)
+    X_train, X_val, y_train, y_val, X = load_data(window_size=window_size, augment=True, load_video=True)
     
     model = get_model_9(window_size=window_size, num_layers=num_layers)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
+    model.summary()
     
-    model.fit(X_train, y_train[:, window_size//2, :], epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val[:, window_size//2, :]))
+    model.fit(X_train, y_train[:, window_size//2, :], 
+              epochs=epochs, batch_size=batch_size, 
+              validation_data=(X_val, y_val[:, window_size//2, :]),
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)])
     
     denoised_coords = model.predict(X)
     denoised_coords = denoised_coords.reshape((-1, 17, 2)) * np.array([170, 174])
