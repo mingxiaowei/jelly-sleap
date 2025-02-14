@@ -62,7 +62,7 @@ def plot_radii_derivative(all_radii, first_x_proportion=1):
     plt.tight_layout()
     plt.show()
 
-def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, derivative_thres=5, plot=True):
+def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, derivative_thres=5, plot=True, verbose=True):
     plt.figure(figsize=(12, 6))
 
     # Calculate derivatives
@@ -87,8 +87,10 @@ def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, deriva
 
     # Calculate mean radius for each point
     mean_radii = np.mean(all_radii, axis=0) * mean_scale
-    print(f'mean_radii: {mean_radii}')
+    if verbose:
+        print(f'mean_radii: {mean_radii}')
     # Filter ranges to only include frames where all radii are above their means
+    total_range_length = 0
     filtered_ranges = []
     for start, end in ranges:
         # For each frame in range, check if all points are above their means
@@ -103,13 +105,15 @@ def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, deriva
                 sub_end_idx = start + i
                 if sub_end_idx - sub_start_idx >= min_range_length:
                     filtered_ranges.append((sub_start_idx, sub_end_idx))
+                    total_range_length += sub_end_idx - sub_start_idx
                 sub_start_idx = None
     filtered_ranges = np.array(filtered_ranges)
-
-    # Print the filtered ranges
-    print(f"Stable ranges (frame numbers) with minimum length of {min_range_length} frames and all radii above {mean_scale*100}% mean:")
-    for start, end in filtered_ranges:
-        print(f"    - Frames {start} to {end} (length: {end-start})")
+    print(f'total_range_length: {total_range_length}')
+    if verbose:
+        # Print the filtered ranges
+        print(f"Stable ranges (frame numbers) with minimum length of {min_range_length} frames and all radii above {mean_scale*100}% mean:")
+        for start, end in filtered_ranges:
+            print(f"    - Frames {start} to {end} (length: {end-start})")
 
     if plot:
         # Plot derivatives for each point
