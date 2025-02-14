@@ -229,7 +229,7 @@ def get_model_7(window_size=5, video_shape=(170, 174, 1), coord_shape=34):
     coord_output = Dense(coord_shape, activation='sigmoid')(decoded)
     
     model = Model(inputs=[video_input, coord_input], outputs=coord_output)
-    model.summary()
+    # model.summary()
     
     return model
 

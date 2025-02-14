@@ -130,13 +130,16 @@ def load_data(
     # 1. augment
     if augment:
         coords_augmented = augment_points(coords_corrected.copy(), dropout_rate, swap_rate)
-    # coords_corrected = mean_interpolate(coords_corrected)
+        
+    coords_corrected_original = coords_corrected.copy()
     coords_augmented = mean_interpolate(coords_augmented, coords_corrected)
+    coords_corrected = mean_interpolate(coords_corrected, coords_corrected)
     # 2. get window
-    coords_corrected_windows, coords_augmented_windows = get_windows_wrapper(
-                                                            [coords_corrected, coords_augmented], 
+    coords_corrected_windows, coords_augmented_windows, coords_corrected_original_windows = get_windows_wrapper(
+                                                            [coords_corrected, coords_augmented, coords_corrected_original], 
                                                             window_size=window_size, 
                                                             flatten=flatten)
+    # TODO: get windows first then swap
     X = coords_corrected_windows
     # 3. shuffle
     indices = np.arange(len(coords_corrected_windows))
@@ -144,8 +147,9 @@ def load_data(
         np.random.shuffle(indices)
     coords_corrected_windows = coords_corrected_windows[indices]
     coords_augmented_windows = coords_augmented_windows[indices]
+    coords_corrected_original_windows = coords_corrected_original_windows[indices]
     # 4. train val split
-    X_train, X_val, y_train, y_val = split_train_val(coords_augmented_windows, coords_corrected_windows, 
+    X_train, X_val, y_train, y_val = split_train_val(coords_augmented_windows, coords_corrected_original_windows, 
                                                      train_size=split_size)
     
     if load_video:
