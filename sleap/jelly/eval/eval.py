@@ -2,6 +2,7 @@ import sleap
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
 import sys
 sys.path.append('..')
@@ -13,16 +14,23 @@ def get_2_nn(point_idx, frame_points):
     sorted_indices = np.argsort(distances)
     return sorted_indices[1:3]
 
-def check_2_nn(point_idx, n1, n2, total_pt_cnt):
+def check_2_nn(point_idx, n1, n2, total_pt_cnt): 
+    # return the number of misconnected 2-nn
     return ((n1 + 1) % total_pt_cnt != point_idx) + ((n2 - 1) % total_pt_cnt != point_idx)
 
-def count_misconnected_nn(point_idx, frame_points):
+def count_misconnected_nn(point_idx, frame_points, binarize=False):
     n1, n2 = get_2_nn(point_idx, frame_points)
     total_pt_cnt = frame_points.shape[0]
-    return min(check_2_nn(point_idx, n1, n2, total_pt_cnt), check_2_nn(point_idx, n2, n1, total_pt_cnt))
+    if binarize:
+        return min(check_2_nn(point_idx, n1, n2, total_pt_cnt), check_2_nn(point_idx, n2, n1, total_pt_cnt)) > 0
+    else:
+        return min(check_2_nn(point_idx, n1, n2, total_pt_cnt), check_2_nn(point_idx, n2, n1, total_pt_cnt))
 
 def get_swap_count(tracked_points, count_missing=True) -> int:
-    non_missing_pts = tracked_points[tracked_points.sum(axis=1) > 0]
+    if np.any(np.isnan(tracked_points)):
+        non_missing_pts = tracked_points[~np.isnan(tracked_points).any(axis=1)]
+    else:
+        non_missing_pts = tracked_points[tracked_points.sum(axis=1) > 0]
     if count_missing:
         swap_count = len(tracked_points) - len(non_missing_pts)
     else:
@@ -38,16 +46,45 @@ def mask_missing_points(filtered_ranges, swap_cnt_lst, mask_value=np.nan):
     swap_cnt_lst_masked = np.where(mask, swap_cnt_lst, mask_value)
     return swap_cnt_lst_masked
 
-def eval_dataset(dataset_path, min_range_length=1, mean_scale=0.7, derivative_thres=5):
-    dataset = sleap.load_file(dataset_path)
-    print(dataset)
-    tracked_points = get_all_tracked_points(dataset, reorder=True, interpolate=False, min_score=0, start_idx=0)
+def get_all_radii(tracked_points):
+    all_radii = np.zeros(tracked_points.shape[:2])
+    for i in range(tracked_points.shape[0]):
+        center_pos = np.mean(tracked_points[i], axis=0)
+        for j in range(tracked_points.shape[1]):
+            all_radii[i, j] = np.linalg.norm(tracked_points[i, j] - center_pos)
+    return all_radii
+
+def eval_dataset(dataset_path, min_range_length=1, mean_scale=0.7, derivative_thres=5, tracked_points_path=None, use_mean=True, verbose=False):
+    if tracked_points_path is None:
+        tracked_points_path = dataset_path.replace('.slp', '_tracked_points.npy')
+    if os.path.exists(tracked_points_path):
+        tracked_points = np.load(tracked_points_path)
+    else:
+        dataset = sleap.load_file(dataset_path)
+        print(f'Getting all tracked points from \n{dataset}')
+        tracked_points = get_all_tracked_points(dataset, reorder=True, interpolate=False, min_score=0, start_idx=0)
+        np.save(tracked_points_path, tracked_points)
+    eval_dataset_from_points(tracked_points, min_range_length, mean_scale, derivative_thres, use_mean, verbose)
+    
+def eval_dataset_single_model(dataset_path, min_range_length=1, mean_scale=0.7, derivative_thres=5, tracked_points_path=None, use_mean=True, verbose=False):
+    if tracked_points_path is None:
+        tracked_points_path = dataset_path.replace('.slp', '_tracked_points.npy')
+    if os.path.exists(tracked_points_path):
+        tracked_points = np.load(tracked_points_path)
+    else:
+        dataset = sleap.load_file(dataset_path)
+        print(f'Getting all tracked points from \n{dataset}')
+        tracked_points = get_all_tracked_points_single_model(dataset)
+        np.save(tracked_points_path, tracked_points)
+    eval_dataset_from_points(tracked_points, min_range_length, mean_scale, derivative_thres, use_mean, verbose)
+    
+def eval_dataset_from_points(tracked_points, min_range_length=1, mean_scale=0.7, derivative_thres=5, use_mean=True, verbose=False):
     radii = get_all_radii(tracked_points)
     filtered_ranges = get_expanded_periods(radii, 
                                            min_range_length=min_range_length, 
                                            mean_scale=mean_scale, 
                                            derivative_thres=derivative_thres, 
-                                           plot=True, verbose=False)
+                                           plot=True, verbose=verbose, use_mean=use_mean)
     
     swap_cnt_lst = []
     for i in range(len(tracked_points)):

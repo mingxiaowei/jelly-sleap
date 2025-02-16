@@ -44,7 +44,7 @@ def get_all_tracked_points(label: sleap.Labels,
             if isinstance(instance, sleap.instance.PredictedInstance) and instance.score < min_score:
                 continue
             track_idx = int(instance.track.name.split('_')[-1])
-            all_tracked_points[lf.frame_idx - 1, track_idx] = instance.points_array[0]
+            all_tracked_points[lf.frame_idx - start_idx, track_idx] = instance.points_array[0]
 
     # interpolate missing coordinates
     missing_point_cnt = 0
@@ -68,6 +68,19 @@ def get_all_tracked_points(label: sleap.Labels,
         reorder_idx = find_polygon_order(all_tracked_points[first_non_missing_frame_idx])
         print(f"reorder_idx.shape: {reorder_idx.shape}")
         all_tracked_points = all_tracked_points[:, reorder_idx, :]
+    
+    return all_tracked_points
+
+def get_all_tracked_points_single_model(label: sleap.Labels) -> np.ndarray:
+    labeled_frames_to_use = label.labeled_frames
+    frame_cnt = len(labeled_frames_to_use)
+    instance_cnt = len(label.skeleton.nodes) - 1
+    all_tracked_points = np.zeros((frame_cnt, instance_cnt, 2))
+    print(f'all_tracked_points shape: {all_tracked_points.shape}')
+
+    # populate all_tracked_coords with known coordinates
+    for lf in labeled_frames_to_use:
+            all_tracked_points[lf.frame_idx] = lf.instances[0].points_array[1:]
     
     return all_tracked_points
 

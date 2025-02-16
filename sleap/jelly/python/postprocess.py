@@ -5,9 +5,10 @@ import seaborn as sns
 from copy import copy
 from .animation import *
 
-def get_all_radii(tracked_points, center_pos=np.array([91, 77])):
+def get_all_radii(tracked_points):
     all_radii = np.zeros(tracked_points.shape[:2])
     for i in range(tracked_points.shape[0]):
+        center_pos = np.nanmean(tracked_points[i], axis=0)
         for j in range(tracked_points.shape[1]):
             all_radii[i, j] = np.linalg.norm(tracked_points[i, j] - center_pos)
     return all_radii
@@ -62,7 +63,7 @@ def plot_radii_derivative(all_radii, first_x_proportion=1):
     plt.tight_layout()
     plt.show()
 
-def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, derivative_thres=5, plot=True, verbose=True):
+def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, derivative_thres=5, plot=True, verbose=True, use_mean=True):
     plt.figure(figsize=(12, 6))
 
     # Calculate derivatives
@@ -86,7 +87,10 @@ def get_expanded_periods(all_radii, min_range_length=100, mean_scale=0.8, deriva
         ranges.append((start_idx, len(all_stable)))
 
     # Calculate mean radius for each point
-    mean_radii = np.mean(all_radii, axis=0) * mean_scale
+    if use_mean:
+        mean_radii = np.nanmean(all_radii, axis=0) * mean_scale
+    else:
+        mean_radii = np.nanmedian(all_radii, axis=0) * mean_scale
     if verbose:
         print(f'mean_radii: {mean_radii}')
     # Filter ranges to only include frames where all radii are above their means
