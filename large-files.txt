@@ -1,0 +1,10 @@
+sleap/jelly/autoencoder/models/m7t2.keras
+sleap/jelly/autoencoder/models/model_19.keras
+tests/data/hdf5_format_v1/training.scale=0.50,sigma=10.h5
+sleap/jelly/autoencoder/results/prediction_7.npy
+sleap/jelly/autoencoder/results/prediction_6.npy
+sleap/jelly/autoencoder/results/denoised_coords_m2.npy
+sleap/jelly/autoencoder/results/predicted_dataset_m0.slp
+sleap/jelly/autoencoder/results/predicted_dataset_m16.slp
+sleap/jelly/autoencoder/results/predicted_dataset_m1.slp
+sleap/jelly/autoencoder/results/predicted_dataset_m10.slp
