@@ -525,3 +525,50 @@ class OffsetRefinementHead(Head):
             sigma_threshold=sigma_threshold,
             loss_weight=loss_weight,
         )
+
+class MaskHead(Head):
+    """Head for specifying class identity maps.
+
+    Attributes:
+        classes: List of string names of the classes.
+        sigma: Spread of the class maps around each node.
+        output_stride: Stride of the output head tensor. The input tensor is expected to
+            be at the same stride.
+        loss_weight: Weight of the loss term for this head during optimization.
+    """
+
+    sigma: float = 2.0
+    output_stride: int = 1
+    loss_weight: float = 1.0
+
+    @property
+    def channels(self) -> int:
+        """Return the number of channels in the tensor output by this head."""
+        return 1
+
+    @property
+    def activation(self) -> str:
+        """Return the activation function of the head output layer."""
+        return "sigmoid"
+
+    def make_head(self, x_in: tf.Tensor, name: Optional[Text] = None) -> tf.Tensor:
+        """Make head output tensor from input feature tensor.
+
+        Args:
+            x_in: An input `tf.Tensor`.
+            name: If provided, specifies the name of the output layer. If not (the
+                default), uses the name of the head as the layer name.
+
+        Returns:
+            A `tf.Tensor` with the correct shape for the head.
+        """
+        if name is None:
+            name = f"{type(self).__name__}"
+        return tf.keras.layers.Conv2D(
+            filters=self.channels,
+            kernel_size=1,
+            strides=1,
+            padding="same",
+            activation=self.activation,
+            name=name,
+        )(x_in)
