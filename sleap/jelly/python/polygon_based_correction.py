@@ -123,3 +123,20 @@ def get_frame_missing_cnt_arr(all_tracked_points):
             if all_tracked_points[frame_idx, inst_idx].sum() == 0:
                 frame_missing_cnt[frame_idx] += 1
     return frame_missing_cnt
+
+def make_ccw(points, permutation=None, polygon_constructor=poly_3):
+    if permutation is None:
+        permutation = polygon_constructor(points)
+    x = points[permutation, 0]
+    y = points[permutation, 1]
+    area = 0.5 * np.sum(x[:-1] * y[1:] - x[1:] * y[:-1]) + 0.5 * (x[-1] * y[0] - x[0] * y[-1])
+    
+    # If area is positive, the polygon is counterclockwise, so reverse the permutation
+    if area < 0:
+        permutation = permutation[::-1]
+        print('reversed')
+    
+    return permutation
+
+def poly_4(points):
+    return make_ccw(points, polygon_constructor=poly_3)

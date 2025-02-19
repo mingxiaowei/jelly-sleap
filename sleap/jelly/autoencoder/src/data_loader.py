@@ -130,9 +130,11 @@ def load_data(
     dropout_rate=0.01,
     swap_rate=0.01, 
     split_size=0.9,
+    canvas_size=(170, 174)
     ):
     _, coords_corrected = load_points(raw_points_path=raw_points_path, 
                                                corrected_points_path=corrected_points_path)
+    coords_corrected = coords_corrected / canvas_size
     coords_corrected_copy = coords_corrected.copy()
     coords_corrected = mean_interpolate(coords_corrected)
     # 1. get window
