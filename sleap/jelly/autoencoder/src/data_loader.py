@@ -133,10 +133,11 @@ def load_data(
     ):
     _, coords_corrected = load_points(raw_points_path=raw_points_path, 
                                                corrected_points_path=corrected_points_path)
-
+    coords_corrected_copy = coords_corrected.copy()
+    coords_corrected = mean_interpolate(coords_corrected)
     # 1. get window
-    coords_window = get_windows_wrapper([coords_corrected], window_size=window_size, flatten=flatten)[0]
-    X = coords_window.copy() # for prediction
+    coords_window, coords_window_copy = get_windows_wrapper([coords_corrected, coords_corrected_copy], window_size=window_size, flatten=flatten)
+    X = coords_window_copy # for prediction
     
     # 2. reorder by polygon
     missing_mask = get_missing_mask(coords_corrected)
@@ -171,7 +172,9 @@ def load_data(
         
     return X_train, X_val, y_train, y_val, X
 
-def mean_interpolate(coords_augmented, coords_corrected):
+def mean_interpolate(coords_augmented, coords_corrected=None):
+    if coords_corrected is None:
+        coords_corrected = coords_augmented
     non_missing_indices = np.where(coords_augmented != 0)
     non_missing_coords = coords_corrected[non_missing_indices]
     mean_coords = np.mean(non_missing_coords, axis=0)
