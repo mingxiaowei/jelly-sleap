@@ -213,7 +213,7 @@ def get_animation_from_tracked_points(
 def plot_polygon(points, order, ax, title):
     """Helper function to plot a polygon with given point order"""
     # Plot points
-    ax.scatter(points[:, 0], points[:, 1], c='blue', s=50)
+    ax.scatter(points[:, 0], points[:, 1], c='blue', s=10)
     
     # Plot edges connecting points in order
     for i in range(len(order)):
@@ -223,7 +223,7 @@ def plot_polygon(points, order, ax, title):
         
         # Add point indices as labels
         ax.text(points[order[i], 0], points[order[i], 1], 
-                str(order[i]), fontsize=8, ha='right')
+                str(order[i]), fontsize=12, ha='right')
     
     ax.set_title(title)
     ax.axis('equal')
@@ -237,10 +237,14 @@ def get_total_edge_length(points, order):
     return total
 
 def plot_some_polygons(points: np.ndarray, poly_constructors: list):
+    poly_cnt = len(poly_constructors)
     polygons = [poly_constructor(points) for poly_constructor in poly_constructors]
-    _, axs = plt.subplots(1, len(polygons), figsize=(15, 5))
+    _, axs = plt.subplots(1, poly_cnt, figsize=(5*poly_cnt, 5))
+    if poly_cnt == 1:
+        axs = [axs]
     for i, order in enumerate(polygons):
         plot_polygon(points, order, axs[i], f'poly_{i+1}')
+        axs[i].invert_yaxis() # invert y-axis to put (0,0) at top left
     plt.tight_layout()
     plt.show()
     

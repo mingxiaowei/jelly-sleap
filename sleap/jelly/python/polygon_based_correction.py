@@ -15,11 +15,20 @@ def get_corrected_coords(all_tracked_points, id_mapping):
         corrected_coords[frame_idx] = all_tracked_points[frame_idx][id_mapping[frame_idx]]
     return corrected_coords
 
-def polygon_correction(labels, polygon_constructor, mins_score=0.4):
+def poly_3(all_tracked_points):
+    points = all_tracked_points
+    if len(points) <= 2:
+        return list(range(len(points)))
+    initial_permutation = nearest_neighbor_path(points)
+    distance_matrix = euclidean_distance_matrix(points)
+    permutation, _ = solve_tsp_local_search(distance_matrix, x0=initial_permutation)
+    return permutation
+
+def polygon_correction(labels, mins_score=0.4, polygon_constructor=poly_3):
     all_tracked_points = get_all_tracked_points(labels, reorder=True, min_score=mins_score)
     return polygon_correction_with_points(all_tracked_points, polygon_constructor)
 
-def polygon_correction_with_points(all_tracked_points, polygon_constructor):
+def polygon_correction_with_points(all_tracked_points, polygon_constructor=poly_3, return_indices=False):
     id_mapping = get_id_mapping_array(all_tracked_points)
     id_mapping = id_mapping.copy()
     frame_cnt = all_tracked_points.shape[0]
@@ -34,7 +43,10 @@ def polygon_correction_with_points(all_tracked_points, polygon_constructor):
         id_mapping[frame_idx] = idx_range[shifted_indices]
 
     corrected_coords = get_corrected_coords(all_tracked_points, id_mapping)
-    return corrected_coords
+    if return_indices:
+        return corrected_coords, id_mapping
+    else:
+        return corrected_coords
 
 def poly_1(points):
     center_pos = np.mean(points, axis=0)
@@ -102,15 +114,6 @@ def poly_2(all_tracked_points):
     initial_path = nearest_neighbor_path(points)
     optimized_path = two_opt(points, initial_path)
     return optimized_path
-
-def poly_3(all_tracked_points):
-    points = all_tracked_points
-    if len(points) <= 2:
-        return list(range(len(points)))
-    initial_permutation = nearest_neighbor_path(points)
-    distance_matrix = euclidean_distance_matrix(points)
-    permutation, _ = solve_tsp_local_search(distance_matrix, x0=initial_permutation)
-    return permutation
 
 def get_frame_missing_cnt_arr(all_tracked_points):
     frame_cnt, inst_cnt = all_tracked_points.shape[:2]
