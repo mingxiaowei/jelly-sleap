@@ -21,6 +21,8 @@ def masked_mse_loss(y_true, y_pred):
     mask = tf.cast(tf.logical_not(is_missing), tf.float32)  # Shape: (batch, seq_len, 17)
     
     # Compute squared error per coordinate pair.
+    print(f'y_true.shape: {y_true.shape}')
+    print(f'y_pred.shape: {y_pred.shape}')
     squared_error = tf.square(y_true - y_pred)  # Shape: (batch, seq_len, 17, 2)
     # Sum errors over the two coordinates.
     squared_error = tf.reduce_sum(squared_error, axis=-1)  # Shape: (batch, seq_len, 17)
@@ -317,6 +319,60 @@ def get_model_9(window_size=5, coord_dim=34, num_layers=2):
     # 4. Center Frame Prediction
     center_idx = window_size // 2
     outputs = Dense(coord_dim, activation='sigmoid')(x[:, center_idx, :])
+    
+    model = Model(inputs, outputs)
+    model.summary()
+    
+    return model
+
+class LearnablePositionalEncoding2(tf.keras.layers.Layer):
+    def __init__(self, window_size, pt_cnt):
+        super().__init__()
+        self.position_emb = Embedding(
+            input_dim=window_size, 
+            output_dim=pt_cnt * 2  # Multiply by 2 for x,y coordinates
+        )
+        self.window_size = window_size
+        self.pt_cnt = pt_cnt
+        
+    def call(self, x):
+        # Reshape input from (batch, window_size, pt_cnt, 2) to (batch, window_size, pt_cnt*2)
+        batch_size = tf.shape(x)[0]
+        x_reshaped = tf.reshape(x, (batch_size, self.window_size, -1))
+        
+        positions = tf.range(start=0, limit=self.window_size, delta=1)
+        positions = tf.expand_dims(positions, axis=0)  # (1, window_size)
+        pos_emb = self.position_emb(positions)  # (1, window_size, pt_cnt*2)
+        
+        return x_reshaped + pos_emb
+
+def get_model_10(window_size=5, pt_cnt=17, num_layers=2):
+    # Input shape now represents (window_size, number_of_points, 2)
+    inputs = Input(shape=(window_size, pt_cnt, 2))
+    
+    # 1. Learned Positional Embeddings
+    x = LearnablePositionalEncoding2(window_size, pt_cnt)(inputs)
+    
+    for _ in range(num_layers):
+        # 2. Transformer Encoder Layer
+        attn = MultiHeadAttention(
+            num_heads=4,
+            key_dim=64,
+            value_dim=64
+        )(x, x)
+        x = LayerNormalization()(x + attn)
+        
+        # 3. Feed-Forward Network
+        ffn = Dense(512, activation='relu')(x)
+        ffn = Dense(pt_cnt * 2)(ffn)  # Output dimension matches flattened points
+        x = LayerNormalization()(x + ffn)
+    
+    # 4. Center Frame Prediction
+    center_idx = window_size // 2
+    x = Dense(pt_cnt * 2, activation='sigmoid')(x[:, center_idx, :])
+    
+    # Reshape output back to (batch, pt_cnt, 2)
+    outputs = Reshape((pt_cnt, 2))(x)
     
     model = Model(inputs, outputs)
     model.summary()

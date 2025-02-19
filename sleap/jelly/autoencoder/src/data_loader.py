@@ -136,7 +136,7 @@ def load_data(
 
     # 1. get window
     coords_window = get_windows_wrapper([coords_corrected], window_size=window_size, flatten=flatten)[0]
-    X = coords_window # for prediction
+    X = coords_window.copy() # for prediction
     
     # 2. reorder by polygon
     missing_mask = get_missing_mask(coords_corrected)
@@ -170,6 +170,7 @@ def load_data(
         X = [video_original, X]
         
     return X_train, X_val, y_train, y_val, X
+
 def mean_interpolate(coords_augmented, coords_corrected):
     non_missing_indices = np.where(coords_augmented != 0)
     non_missing_coords = coords_corrected[non_missing_indices]

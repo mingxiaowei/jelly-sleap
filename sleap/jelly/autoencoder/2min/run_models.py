@@ -278,7 +278,10 @@ def run_model_8(window_size=5, epochs=100, batch_size=32, optimizer='adam', spli
     
     return improved_coords
 
-def run_model_9(window_size=5, epochs=100, batch_size=32, optimizer='adam', split_size=0.9, num_layers=2, shuffle=True,
+def run_model_9(window_size=5, epochs=100, batch_size=32, 
+                optimizer='adam', split_size=0.9, 
+                num_layers=2, 
+                shuffle=True,
                 dropout_rate=0.01, swap_rate=0.005):
     X_train, X_val, y_train, y_val, X = load_data(
         window_size=window_size, 
@@ -297,6 +300,36 @@ def run_model_9(window_size=5, epochs=100, batch_size=32, optimizer='adam', spli
     model.fit(X_train, y_train[:, window_size//2, :], 
               epochs=epochs, batch_size=batch_size, 
               validation_data=(X_val, y_val[:, window_size//2, :]),
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=1)])
+    
+    denoised_coords = model.predict(X)
+    denoised_coords = denoised_coords.reshape((-1, 17, 2)) * np.array([170, 174])
+    return denoised_coords
+
+def run_model_10(window_size=5, epochs=100, batch_size=32, 
+                optimizer='adam', split_size=0.9, 
+                num_layers=2, 
+                shuffle=True,
+                dropout_rate=0.01, 
+                swap_rate=0.005):
+    
+    X_train, X_val, y_train, y_val, X = load_data(
+        window_size=window_size, 
+        augment=True, 
+        load_video=False, 
+        split_size=split_size, 
+        shuffle=shuffle, 
+        dropout_rate=dropout_rate, 
+        swap_rate=swap_rate,
+    )
+    
+    model = get_model_10(window_size=window_size, num_layers=num_layers)
+    model.compile(optimizer=optimizer, loss=masked_mse_loss)
+    model.summary()
+    
+    model.fit(X_train, y_train, 
+              epochs=epochs, batch_size=batch_size, 
+              validation_data=(X_val, y_val),
               callbacks=[tf.keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=1)])
     
     denoised_coords = model.predict(X)
