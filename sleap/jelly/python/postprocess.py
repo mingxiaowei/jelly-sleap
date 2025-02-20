@@ -145,7 +145,7 @@ def get_id_mapping_array(all_tracked_points: np.ndarray) -> np.ndarray:
     frame_cnt, pt_cnt = all_tracked_points.shape[:2]
     return np.tile(np.arange(pt_cnt), (frame_cnt, 1))
 
-def dataset_with_new_points(old_labels, new_points, node_name='tb1_node', handle_first_frame=True, start_idx=0):
+def dataset_with_new_points(old_labels, new_points, node_name='tb', handle_first_frame=True, start_idx=0):
     corrected_label = copy(old_labels)
     skl = corrected_label.skeletons[0]
     instance_cnt = len(corrected_label.labeled_frames[1].instances)

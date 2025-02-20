@@ -6,7 +6,7 @@ from .postprocess import *
 
 def find_best_roll(curr_frame_pts: np.ndarray, prev_frame_pts: np.ndarray) -> int:
     n = len(curr_frame_pts)
-    comparator = lambda n: np.sum((np.roll(curr_frame_pts, n) - prev_frame_pts) ** 2)
+    comparator = lambda n: np.sum((np.roll(curr_frame_pts, n, axis=0) - prev_frame_pts) ** 2)
     return min(range(n), key=comparator)
 
 def get_corrected_coords(all_tracked_points, id_mapping):
@@ -39,7 +39,7 @@ def polygon_correction_with_points(all_tracked_points, polygon_constructor=poly_
         polygon_order = polygon_constructor(curr_frame_pts)
         prev_frame_indices = id_mapping[frame_idx-1]
         best_shift = find_best_roll(curr_frame_pts[polygon_order], all_tracked_points[frame_idx-1][prev_frame_indices])
-        shifted_indices = np.roll(polygon_order, best_shift)
+        shifted_indices = np.roll(polygon_order, best_shift, axis=0)
         id_mapping[frame_idx] = idx_range[shifted_indices]
 
     corrected_coords = get_corrected_coords(all_tracked_points, id_mapping)
@@ -134,7 +134,6 @@ def make_ccw(points, permutation=None, polygon_constructor=poly_3):
     # If area is positive, the polygon is counterclockwise, so reverse the permutation
     if area < 0:
         permutation = permutation[::-1]
-        print('reversed')
     
     return permutation
 
