@@ -19,12 +19,12 @@ def check_2_nn(point_idx, n1, n2, total_pt_cnt):
     # return the number of misconnected 2-nn
     return ((n1 + 1) % total_pt_cnt != point_idx) + ((n2 - 1) % total_pt_cnt != point_idx)
 
-def count_misconnected_nn(point_idx, frame_points, binarize=True, method='nn'):
+def count_misconnected_nn(point_idx, frame_points, binarize=True, method='nn', polygon_constructor=poly_4):
     total_pt_cnt = frame_points.shape[0]
     if method == 'nn':
         n1, n2 = get_2_nn(point_idx, frame_points)
     elif method == 'polygon':
-        polygon_order = poly_3(frame_points)
+        polygon_order = polygon_constructor(frame_points)
         n1, n2 = polygon_order[point_idx - 1], polygon_order[(point_idx + 1) % total_pt_cnt]
         point_idx = polygon_order[point_idx]
     else:
@@ -36,7 +36,7 @@ def count_misconnected_nn(point_idx, frame_points, binarize=True, method='nn'):
     else:
         return misconnected_cnt
 
-def get_swap_count(tracked_points, count_missing=True, method='nn', binarize=True) -> int:
+def get_swap_count(tracked_points, count_missing=True, method='nn', binarize=True, polygon_constructor=poly_4) -> int:
     if np.any(np.isnan(tracked_points)):
         non_missing_pts = tracked_points[~np.isnan(tracked_points).any(axis=1)]
     else:
@@ -46,7 +46,7 @@ def get_swap_count(tracked_points, count_missing=True, method='nn', binarize=Tru
     else:
         swap_count = 0
     for i in range(len(non_missing_pts)):
-        swap_count += count_misconnected_nn(i, non_missing_pts, method=method, binarize=binarize)
+        swap_count += count_misconnected_nn(i, non_missing_pts, method=method, binarize=binarize, polygon_constructor=polygon_constructor)
     return swap_count
 
 def mask_missing_points(filtered_ranges, swap_cnt_lst, mask_value=np.nan):
@@ -122,7 +122,8 @@ def eval_dataset_from_points(tracked_points,
                              verbose=False, 
                              binarize=True, 
                              method='nn',
-                             count_missing=True):
+                             count_missing=True, 
+                             polygon_constructor=poly_4):
     radii = get_all_radii(tracked_points)
     filtered_ranges = get_expanded_periods(radii, 
                                            min_range_length=min_range_length, 
@@ -132,7 +133,7 @@ def eval_dataset_from_points(tracked_points,
     
     swap_cnt_lst = []
     for i in range(len(tracked_points)):
-        swap_cnt_lst.append(get_swap_count(tracked_points[i], count_missing=count_missing, method=method, binarize=binarize))
+        swap_cnt_lst.append(get_swap_count(tracked_points[i], count_missing=count_missing, method=method, binarize=binarize, polygon_constructor=polygon_constructor))
     swap_cnt_lst_masked = mask_missing_points(filtered_ranges, swap_cnt_lst)
 
     plt.figure(figsize=(12, 6))
