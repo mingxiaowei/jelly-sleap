@@ -10,6 +10,7 @@ export VECLIB_MAXIMUM_THREADS=$n_threads
 sleap-track \
     /home/mingxiao/Desktop/jellyfish/label/multifish/multifish_animal_1_v10.slp \
     --video.index 0 \
+    --batch_size 400 \
     --frames 0,-3239999 \
     -m /home/mingxiao/Desktop/jellyfish/label/multifish/models/250221_022817.centroid.n=4149 \
     -m /home/mingxiao/Desktop/jellyfish/label/multifish/models/250221_031000.centered_instance.n=4149 \
