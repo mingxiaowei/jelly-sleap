@@ -139,3 +139,25 @@ def make_ccw(points, permutation=None, polygon_constructor=poly_3):
 
 def poly_4(points):
     return make_ccw(points, polygon_constructor=poly_3)
+
+def deg2rad(deg):
+    return deg * np.pi / 180
+
+def rad2deg(rad):
+    return rad * 180 / np.pi
+
+# adapted from https://stackoverflow.com/questions/20924085/python-conversion-between-coordinates
+def cart2pol(xy_arr, center_pos=(0, 0)):
+    xy_arr = xy_arr - center_pos
+    x = xy_arr[:, 0]
+    y = xy_arr[:, 1]
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    return np.array([rho, phi]).T
+
+def pol2cart(rho_phi_arr, center_pos=(0, 0)):
+    rho = rho_phi_arr[:, 0]
+    phi = rho_phi_arr[:, 1]
+    x = rho * np.cos(phi)
+    y = rho * np.sin(phi)
+    return np.array([x, y]).T + center_pos

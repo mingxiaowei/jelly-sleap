@@ -73,7 +73,8 @@ def eval_dataset(dataset_path,
                  verbose=False,
                  binarize=True,
                  method='nn', 
-                 use_cached_pts=True):
+                 use_cached_pts=True,
+                 count_missing=True):
     if tracked_points_path is None:
         tracked_points_path = dataset_path.replace('.slp', '_tracked_points.npy')
     if os.path.exists(tracked_points_path) and use_cached_pts:
@@ -83,7 +84,11 @@ def eval_dataset(dataset_path,
         print(f'Getting all tracked points from {dataset}')
         tracked_points = get_all_tracked_points(dataset, reorder=True, interpolate=False, min_score=0, start_idx=0)
         np.save(tracked_points_path, tracked_points)
-    return eval_dataset_from_points(tracked_points, min_range_length, mean_scale, derivative_thres, use_mean, verbose, binarize, method)
+    return eval_dataset_from_points(tracked_points, 
+                                    min_range_length, mean_scale, 
+                                    derivative_thres, use_mean, 
+                                    verbose, binarize, 
+                                    method, count_missing)
     
 def eval_dataset_single_model(dataset_path, 
                               min_range_length=1, 
@@ -103,7 +108,11 @@ def eval_dataset_single_model(dataset_path,
         print(f'Getting all tracked points from \n{dataset}')
         tracked_points = get_all_tracked_points_single_model(dataset)
         np.save(tracked_points_path, tracked_points)
-    return eval_dataset_from_points(tracked_points, min_range_length, mean_scale, derivative_thres, use_mean, verbose, binarize, method)
+    return eval_dataset_from_points(tracked_points, 
+                                    min_range_length, mean_scale, 
+                                    derivative_thres, use_mean, 
+                                    verbose, binarize, 
+                                    method, count_missing)
     
 def eval_dataset_from_points(tracked_points, 
                              min_range_length=1, 
@@ -112,7 +121,8 @@ def eval_dataset_from_points(tracked_points,
                              use_mean=True, 
                              verbose=False, 
                              binarize=True, 
-                             method='nn'):
+                             method='nn',
+                             count_missing=True):
     radii = get_all_radii(tracked_points)
     filtered_ranges = get_expanded_periods(radii, 
                                            min_range_length=min_range_length, 
@@ -122,7 +132,7 @@ def eval_dataset_from_points(tracked_points,
     
     swap_cnt_lst = []
     for i in range(len(tracked_points)):
-        swap_cnt_lst.append(get_swap_count(tracked_points[i], count_missing=False, method=method, binarize=binarize))
+        swap_cnt_lst.append(get_swap_count(tracked_points[i], count_missing=count_missing, method=method, binarize=binarize))
     swap_cnt_lst_masked = mask_missing_points(filtered_ranges, swap_cnt_lst)
 
     plt.figure(figsize=(12, 6))
