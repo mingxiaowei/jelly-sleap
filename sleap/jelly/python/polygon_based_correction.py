@@ -1,7 +1,7 @@
 import numpy as np
 from python_tsp.distances import euclidean_distance_matrix
 from python_tsp.heuristics import solve_tsp_local_search
-from .animation import *
+# from .animation import *
 from .postprocess import *
 
 def find_best_roll(curr_frame_pts: np.ndarray, prev_frame_pts: np.ndarray) -> int:

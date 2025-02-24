@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from typing import Union, List
-from polygon_based_correction import poly_4
+from .polygon_based_correction import poly_4
 from tqdm import tqdm
 
 def get_next_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: int) -> int:
@@ -77,18 +77,20 @@ def get_all_untracked_points(label: sleap.Labels,
                            reorder: bool = True, 
                            interpolate: bool = True,
                            min_score: int = 0, 
+                           use_labeled_only: bool = True,
                            start_idx: int = 0, 
                            tb_cnt: int = 17) -> np.ndarray:
     """
     Get all untracked points from a sleap label file.
     """
     labeled_frames_to_use = label.labeled_frames[start_idx:]
-    return get_all_untracked_points_from_lbfs(labeled_frames_to_use, reorder, interpolate, min_score, start_idx, tb_cnt)
+    return get_all_untracked_points_from_lbfs(labeled_frames_to_use, reorder, interpolate, min_score, use_labeled_only, start_idx, tb_cnt)
 
 def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
                                        reorder: bool = True, 
                                        interpolate: bool = True,
-                                       min_score: int = 0, 
+                                       min_score: float = 0,
+                                       use_labeled_only: bool = True,
                                        start_idx: int = 0, 
                                        tb_cnt: int = 17) -> np.ndarray:
     """
@@ -101,9 +103,13 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
     missing_point_cnt = 0
 
     # populate all_tracked_coords with known coordinates
+    if use_labeled_only:
+        validator = lambda inst: isinstance(inst, sleap.instance.Instance) and not isinstance(inst, sleap.instance.PredictedInstance)
+    else:
+        validator = lambda inst: isinstance(inst, sleap.instance.PredictedInstance) and inst.score >= min_score
+        
     for frame_idx, lf in tqdm(enumerate(lbfs)):
-        pred_insts = [instance for instance in lf.instances \
-                        if isinstance(instance, sleap.instance.Instance) and not isinstance(instance, sleap.instance.PredictedInstance)]
+        pred_insts = [instance for instance in lf.instances if validator(instance)]
         if len(pred_insts) > tb_cnt:
             pred_inst_scores = [instance.score for instance in pred_insts]
             sorted_args = np.argsort(pred_inst_scores)[::-1][:tb_cnt]
@@ -137,6 +143,7 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
         all_untracked_points = all_untracked_points[:, reorder_idx, :]
     
     return all_untracked_points
+
 def get_all_tracked_points_single_model(label: sleap.Labels) -> np.ndarray:
     labeled_frames_to_use = label.labeled_frames
     frame_cnt = len(labeled_frames_to_use)

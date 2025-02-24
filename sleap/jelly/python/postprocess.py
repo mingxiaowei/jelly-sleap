@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from copy import copy
-from .animation import *
+# from .animation import *
 
 def get_all_radii(tracked_points):
     all_radii = np.zeros(tracked_points.shape[:2])
