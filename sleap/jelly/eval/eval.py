@@ -28,7 +28,7 @@ def count_misconnected_nn(point_idx, frame_points, binarize=True, method='nn', p
         n1, n2 = polygon_order[point_idx - 1], polygon_order[(point_idx + 1) % total_pt_cnt]
         point_idx = polygon_order[point_idx]
     else:
-        raise ValueError(f'Invalid method: {method}')
+        raise ValueError(f'Unknown method: {method}')
     
     misconnected_cnt = min(check_2_nn(point_idx, n1, n2, total_pt_cnt), check_2_nn(point_idx, n2, n1, total_pt_cnt))
     if binarize:
@@ -36,23 +36,28 @@ def count_misconnected_nn(point_idx, frame_points, binarize=True, method='nn', p
     else:
         return misconnected_cnt
 
-def get_swap_count(tracked_points, count_missing=True, method='nn', binarize=True, polygon_constructor=poly_4) -> int:
+def get_err_count(tracked_points, count_missing=True, method='nn', binarize=True, polygon_constructor=poly_4) -> int:
     if np.any(np.isnan(tracked_points)):
         non_missing_pts = tracked_points[~np.isnan(tracked_points).any(axis=1)]
     else:
         non_missing_pts = tracked_points[tracked_points.sum(axis=1) > 0]
-    if count_missing:
-        swap_count = len(tracked_points) - len(non_missing_pts)
-    else:
-        swap_count = 0
+    swap_count = 0
     for i in range(len(non_missing_pts)):
-        swap_count += count_misconnected_nn(i, non_missing_pts, method=method, binarize=binarize, polygon_constructor=polygon_constructor)
+        swap_count += count_misconnected_nn(i, non_missing_pts, 
+                                            method=method, binarize=binarize, polygon_constructor=polygon_constructor)
+    if count_missing:
+        missing_count = len(tracked_points) - len(non_missing_pts)
+        return swap_count, missing_count
     return swap_count
 
-def mask_missing_points(filtered_ranges, swap_cnt_lst, mask_value=np.nan):
-    mask = np.zeros(len(swap_cnt_lst), dtype=bool)
+def get_mask_from_ranges(filtered_ranges, frame_cnt):
+    mask = np.zeros(frame_cnt, dtype=bool)
     for start, end in filtered_ranges:
         mask[start:end] = True
+    return mask
+
+def mask_non_expanded_frames(filtered_ranges, swap_cnt_lst, mask_value=np.nan):
+    mask = get_mask_from_ranges(filtered_ranges, len(swap_cnt_lst))
     swap_cnt_lst_masked = np.where(mask, swap_cnt_lst, mask_value)
     return swap_cnt_lst_masked
 
@@ -98,6 +103,7 @@ def eval_dataset_single_model(dataset_path,
                               use_mean=True, 
                               verbose=False,
                               binarize=True,
+                              count_missing=True,
                               method='nn'):
     if tracked_points_path is None:
         tracked_points_path = dataset_path.replace('.slp', '_tracked_points.npy')
@@ -133,20 +139,42 @@ def eval_dataset_from_points(tracked_points,
                                            plot=True, verbose=verbose, use_mean=use_mean)
     
     swap_cnt_lst = []
+    missing_cnt_lst = []
+    expansion_mask = get_mask_from_ranges(filtered_ranges, len(tracked_points))
+    fill_val = np.nan
     for i in tqdm(range(len(tracked_points))):
-        swap_cnt_lst.append(get_swap_count(tracked_points[i], count_missing=count_missing, method=method, binarize=binarize, polygon_constructor=polygon_constructor))
-    swap_cnt_lst_masked = mask_missing_points(filtered_ranges, swap_cnt_lst)
+        if expansion_mask[i]:
+            swap_cnt, missing_cnt = get_err_count(tracked_points[i], 
+                                                  count_missing=count_missing, method=method, binarize=binarize, polygon_constructor=polygon_constructor)
+            swap_cnt_lst.append(swap_cnt)
+            missing_cnt_lst.append(missing_cnt)
+        else:
+            swap_cnt_lst.append(fill_val)
+            missing_cnt_lst.append(fill_val)
     
     if save_path is not None:
         parent_dir = os.path.dirname(save_path)
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
-        np.save(save_path, swap_cnt_lst_masked)
+        np.save(save_path, swap_cnt_lst)
 
-    plt.figure(figsize=(12, 6))
-    plt.plot(swap_cnt_lst_masked)
+    plt.figure(figsize=(10, 5))
+    plt.plot(swap_cnt_lst, label='Swap Count')
+    plt.plot(missing_cnt_lst, label='Missing Count')
+    # plt.plot(swap_cnt_lst + missing_cnt_lst, label='Total Error Count')
+    plt.legend()
     plt.xlabel('Frame Number')
-    plt.ylabel('Swap Count')
+    plt.ylabel('Error Count')
+    plt.yticks(range(18))
     plt.show()
     
-    return swap_cnt_lst_masked, filtered_ranges
+    plt.hist(swap_cnt_lst, label='Swap Count', bins=18)
+    plt.hist(missing_cnt_lst, label='Missing Count', bins=18)
+    plt.legend()
+    plt.xlabel('Error Count')
+    plt.ylabel('Frame Count')
+    plt.xticks(range(18))
+    plt.title('Error Count Distribution')
+    plt.show()
+    
+    return swap_cnt_lst, missing_cnt_lst,filtered_ranges
