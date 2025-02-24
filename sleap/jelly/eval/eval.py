@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-
+from tqdm import tqdm
 import sys
 sys.path.append('..')
 from python.animation import *
@@ -123,7 +123,8 @@ def eval_dataset_from_points(tracked_points,
                              binarize=True, 
                              method='nn',
                              count_missing=True, 
-                             polygon_constructor=poly_4):
+                             polygon_constructor=poly_4, 
+                             save_path=None):
     radii = get_all_radii(tracked_points)
     filtered_ranges = get_expanded_periods(radii, 
                                            min_range_length=min_range_length, 
@@ -132,9 +133,15 @@ def eval_dataset_from_points(tracked_points,
                                            plot=True, verbose=verbose, use_mean=use_mean)
     
     swap_cnt_lst = []
-    for i in range(len(tracked_points)):
+    for i in tqdm(range(len(tracked_points))):
         swap_cnt_lst.append(get_swap_count(tracked_points[i], count_missing=count_missing, method=method, binarize=binarize, polygon_constructor=polygon_constructor))
     swap_cnt_lst_masked = mask_missing_points(filtered_ranges, swap_cnt_lst)
+    
+    if save_path is not None:
+        parent_dir = os.path.dirname(save_path)
+        if not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
+        np.save(save_path, swap_cnt_lst_masked)
 
     plt.figure(figsize=(12, 6))
     plt.plot(swap_cnt_lst_masked)
