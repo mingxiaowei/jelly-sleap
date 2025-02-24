@@ -99,7 +99,8 @@ def multi2single(multi_animal_dataset: sleap.Labels,
     new_labeled_frames = []
     for lf in multi_animal_dataset.labeled_frames:
         # generate new instances 
-        instances = [inst for inst in lf.instances if not isinstance(inst, sleap.PredictedInstance) and isinstance(inst, sleap.Instance)]
+        instances = [inst for inst in lf.instances \
+            if not isinstance(inst, sleap.PredictedInstance) and isinstance(inst, sleap.Instance) and len(inst.points) > 0]
         if exclude_missing_frames and len(instances) < tb_cnt:
             continue
         point_dict = {f'Mouth': sleap.instance.Point(x=mouth_location[0], y=mouth_location[1])}
