@@ -16,6 +16,7 @@ def copy_suggestions_func(src: sleap.Labels, dst: sleap.Labels) -> None:
 def single2multi(single_animal_dataset: sleap.Labels, 
                  assign_track: bool=True, 
                  copy_suggestions: bool=True, 
+                 exclude_missing_frames: bool=False,
                  save_path: str=None) -> sleap.Labels:
     
     tb_cnt = len(single_animal_dataset.skeletons[0].nodes) - 1 # 1 mouth; the rest are tentacles
@@ -40,9 +41,9 @@ def single2multi(single_animal_dataset: sleap.Labels,
             if isinstance(inst, sleap.Instance) and not isinstance(inst, sleap.PredictedInstance):
                 labeled_inst = inst
                 break
-        if labeled_inst is None:
+        if labeled_inst is None or (exclude_missing_frames and len(labeled_inst.nodes) < tb_cnt + 1):
             continue
-        for old_node, old_point in zip(lf.instances[0].nodes, lf.instances[0].points):
+        for old_node, old_point in zip(labeled_inst.nodes, labeled_inst.points):
             if old_node.name.lower() == 'mouth':
                 mouth_locations.append([old_point.x, old_point.y])
                 continue
@@ -80,6 +81,7 @@ def single2multi(single_animal_dataset: sleap.Labels,
 def multi2single(multi_animal_dataset: sleap.Labels, 
                  mouth_location: Sequence[float]=(86.19, 79.87),
                  copy_suggestions: bool=True, 
+                 exclude_missing_frames: bool=True,
                  save_path: str=None) -> sleap.Labels:
     
     assert multi_animal_dataset.tracks, 'Tracks are not assigned'
@@ -97,12 +99,13 @@ def multi2single(multi_animal_dataset: sleap.Labels,
     new_labeled_frames = []
     for lf in multi_animal_dataset.labeled_frames:
         # generate new instances 
+        instances = [inst for inst in lf.instances if not isinstance(inst, sleap.PredictedInstance) and isinstance(inst, sleap.Instance)]
+        if exclude_missing_frames and len(instances) < tb_cnt:
+            continue
         point_dict = {f'Mouth': sleap.instance.Point(x=mouth_location[0], y=mouth_location[1])}
         curr_tb_cnt = 0
         
-        for inst in lf.instances:
-            if inst is None or isinstance(inst, sleap.PredictedInstance):
-                continue
+        for inst in instances:
             old_point = inst.points[0]
             tb_idx = int(inst.track.name[6:]) + 1
             point_dict[f'TB{tb_idx}'] = sleap.instance.Point(x=old_point.x, y=old_point.y)
@@ -110,8 +113,8 @@ def multi2single(multi_animal_dataset: sleap.Labels,
             
         jellyfish_inst = sleap.Instance(skeleton=new_skeleton, points=point_dict, frame=lf)
             
-        # if curr_tb_cnt != tb_cnt:
-        #     print(f'TB count mismatch at frame {lf.frame_idx}: {curr_tb_cnt} != {tb_cnt}')
+        if curr_tb_cnt != tb_cnt:
+            print(f'TB count mismatch at frame {lf.frame_idx}: {curr_tb_cnt} != {tb_cnt}')
             
         new_lf = sleap.LabeledFrame(video=single_animal_dataset.video, frame_idx=lf.frame_idx, instances=[jellyfish_inst])
         new_labeled_frames.append(new_lf)
