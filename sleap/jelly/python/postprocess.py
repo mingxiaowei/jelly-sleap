@@ -160,7 +160,7 @@ def dataset_with_new_points(old_labels, new_points, node_name='tb', handle_first
         all_instances = []
         for inst_idx in range(instance_cnt):
             x, y = new_points[lf_idx - 1, inst_idx]
-            if x + y == 0:
+            if x + y == 0 or np.isnan(x) or np.isnan(y):
                 missing_pt_cnt += 1
                 continue
             point_dict = {node_name: sleap.instance.Point(x=x, y=y)}

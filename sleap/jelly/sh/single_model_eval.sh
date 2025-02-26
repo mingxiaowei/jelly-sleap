@@ -1,6 +1,6 @@
 #! /bin/bash
 
-n_threads=40
+n_threads=5
 export OMP_NUM_THREADS=$n_threads
 export OPENBLAS_NUM_THREADS=$n_threads
 export MKL_NUM_THREADS=$n_threads

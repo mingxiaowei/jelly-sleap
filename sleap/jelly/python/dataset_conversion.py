@@ -134,4 +134,52 @@ def multi2single(multi_animal_dataset: sleap.Labels,
     
     return single_animal_dataset
         
+def single_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a valid video
+                                     points: np.ndarray,
+                                     mouth_location: Sequence[float]=(86.19, 79.87), 
+                                     save_path: str=None) -> sleap.Labels:
+    
+    assert dataset.video, 'Dataset has no video'
+    assert dataset.video.backend.frames == points.shape[0], f'Video frame count mismatch: {dataset.video.backend.frames} != {points.shape[0]}'
+    vid = dataset.video.backend
+    single_animal_dataset = copy(dataset)
+    frame_cnt, tb_cnt = points.shape[:2]
+    print(f'Tentacle count: {tb_cnt}')
+    
+    new_skeleton = sleap.Skeleton(name=f'jellyfish')
+    new_skeleton.add_node(f'Mouth')
+    for i in range(tb_cnt):
+        new_skeleton.add_node(f'TB{i+1}')
+        new_skeleton.add_edge(f'Mouth', f'TB{i+1}')
+    single_animal_dataset.skeletons = [new_skeleton]
+    
+    new_labeled_frames = []
+    missing_cnt = 0
+    for lf_idx in range(frame_cnt):
+        # generate new instances 
+        point_dict = {f'Mouth': sleap.instance.Point(x=mouth_location[0], y=mouth_location[1])}
+        
+        for tb_idx in range(tb_cnt):
+            x, y = points[lf_idx, tb_idx]
+            if x + y == 0 or np.isnan(x) or np.isnan(y):
+                missing_cnt += 1
+                continue
+            point_dict[f'TB{tb_idx+1}'] = sleap.instance.Point(x=x, y=y)
+            
+        jellyfish_inst = sleap.Instance(skeleton=new_skeleton, points=point_dict, frame=vid.get_frame(lf_idx))
+            
+        new_lf = sleap.LabeledFrame(video=single_animal_dataset.video, frame_idx=lf_idx, instances=[jellyfish_inst])
+        new_labeled_frames.append(new_lf)
+    
+    single_animal_dataset.labeled_frames = new_labeled_frames
+    single_animal_dataset.tracks = []
+    
+    if save_path is not None:
+        parent_dir = os.path.dirname(save_path)
+        if not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
+        single_animal_dataset.save(save_path)
+    
+    return single_animal_dataset
+        
     

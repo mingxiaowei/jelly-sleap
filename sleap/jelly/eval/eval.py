@@ -158,24 +158,60 @@ def eval_dataset_from_points(tracked_points,
             os.makedirs(parent_dir)
         np.save(save_path, swap_cnt_lst)
 
-    plt.figure(figsize=(10, 5))
-    plt.plot(swap_cnt_lst, label='Swap Count')
-    plt.plot(missing_cnt_lst, label='Missing Count')
-    # plt.plot(swap_cnt_lst + missing_cnt_lst, label='Total Error Count')
-    plt.legend()
-    plt.xlabel('Frame Number')
-    plt.ylabel('Error Count')
-    plt.yticks(range(18))
-    plt.show()
-    
-    plt.hist(swap_cnt_lst, label='Swap Count', bins=18)
-    plt.hist(missing_cnt_lst, label='Missing Count', bins=18)
-    plt.legend()
-    plt.xlabel('Error Count')
-    plt.ylabel('Frame Count')
-    plt.xticks(range(18))
-    plt.title('Error Count Distribution')
-    plt.show()
+    plot_error_count_over_time(swap_cnt_lst, missing_cnt_lst, plot_total=False, tb_cnt=17)
+    plot_error_count_distribution(swap_cnt_lst, missing_cnt_lst, tb_cnt=17)
     
     return swap_cnt_lst, missing_cnt_lst,filtered_ranges
 
+def plot_error_count_over_time(swap_cnt_lst, missing_cnt_lst, plot_total=False, tb_cnt=17):
+    plt.figure(figsize=(10, 5))
+    plt.plot(swap_cnt_lst, label='Swap Count')
+    plt.plot(missing_cnt_lst, label='Missing Count')
+    if plot_total:
+        plt.plot(swap_cnt_lst + missing_cnt_lst, label='Total Error Count')
+    plt.legend()
+    plt.xlabel('Frame Number')
+    plt.ylabel('Error Count')
+    plt.yticks(range(tb_cnt + 1))
+    plt.show()
+
+def plot_error_count_distribution(swap_cnt_lst, missing_cnt_lst, tb_cnt=17):
+    plt.hist(swap_cnt_lst, label='Swap Count', bins=tb_cnt + 1)
+    plt.hist(missing_cnt_lst, label='Missing Count', bins=tb_cnt + 1)
+    plt.legend()
+    plt.xlabel('Error Count')
+    plt.ylabel('Frame Count')
+    plt.xticks(range(tb_cnt + 1))
+    plt.title('Error Count Distribution')
+    plt.show()
+
+def eval_discrete_points(tracked_points, frame_indices,
+                         binarize=True, 
+                         method='nn',
+                         count_missing=True, 
+                         polygon_constructor=poly_4):
+    
+    tb_cnt = tracked_points.shape[1]
+    swap_cnt_lst = []
+    missing_cnt_lst = []
+    for i in tqdm(range(len(tracked_points))):
+        swap_cnt, missing_cnt = get_err_count(tracked_points[i], 
+                                              count_missing=count_missing, 
+                                              method=method, 
+                                              binarize=binarize, 
+                                              polygon_constructor=polygon_constructor)
+        swap_cnt_lst.append(swap_cnt)
+        missing_cnt_lst.append(missing_cnt)
+
+    plt.figure(figsize=(10, 5))
+    plt.scatter(frame_indices, swap_cnt_lst, s=10, label='Swap Count')
+    plt.scatter(frame_indices, missing_cnt_lst, s=10, label='Missing Count')
+    plt.legend()
+    plt.xlabel('Frame Number')
+    plt.ylabel('Error Count')
+    plt.yticks(range(tb_cnt + 1))
+    plt.show()
+    
+    plot_error_count_distribution(swap_cnt_lst, missing_cnt_lst, tb_cnt=tb_cnt)
+    
+    return swap_cnt_lst, missing_cnt_lst
