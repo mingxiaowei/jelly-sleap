@@ -12,6 +12,7 @@ multi_4k_tracked_points = get_all_untracked_points(multi_4k_dataset,
                                                    min_score=0.5, 
                                                    start_idx=0, 
                                                    use_labeled_only=False,
-                                                   tb_cnt=17)
-multi_4k_points_path = '/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/multifish_animal_1_v10_predicted_points.npy'
+                                                   tb_cnt=17, 
+                                                   load_pred_score=True)
+multi_4k_points_path = '/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/multifish_animal_1_v10_predicted_points_with_score.npy'
 np.save(multi_4k_points_path, multi_4k_tracked_points)

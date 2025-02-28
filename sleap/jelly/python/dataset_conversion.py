@@ -184,10 +184,13 @@ def single_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a
 
 def multi_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a valid video
                                     points: np.ndarray,
+                                    with_score: bool=False,
                                     save_path: str=None) -> sleap.Labels:
     
     assert dataset.video, 'Dataset has no video'
     assert dataset.video.backend.frames == points.shape[0], f'Video frame count mismatch: {dataset.video.backend.frames} != {points.shape[0]}'
+    if with_score:
+        assert points.shape[2] == 3, 'Points array must have 3 channels: x, y, score'
     
     tb_cnt = points.shape[1]
     print(f'Tentacle count: {tb_cnt}')
@@ -202,13 +205,21 @@ def multi_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a 
         curr_frame = dataset.video.backend.get_frame(lf_idx)
         new_instances = []
         for tb_idx in range(tb_cnt):
-            x, y = points[lf_idx, tb_idx]
+            x, y = points[lf_idx, tb_idx, :2]
             if x + y == 0 or np.isnan(x) or np.isnan(y):
                 continue
-            point_dict = {f'tb': sleap.instance.Point(x=x, y=y)}
+            
+            if with_score:
+                pt = sleap.instance.PredictedPoint(x=x, y=y, score=points[lf_idx, tb_idx, 2])
+            else:
+                pt = sleap.instance.Point(x=x, y=y)
+                
             if all_tracks[tb_idx] is None:
                 all_tracks[tb_idx] = sleap.instance.Track(name=f'track_{tb_idx}', spawned_on=lf_idx)
-            tb_instance = sleap.Instance(skeleton=new_skeleton, points=point_dict, frame=curr_frame, track=all_tracks[tb_idx])
+                
+            tb_instance = sleap.Instance(skeleton=new_skeleton, points={f'tb': pt}, frame=curr_frame, track=all_tracks[tb_idx])
+            if with_score:
+                tb_instance = sleap.instance.PredictedInstance.from_instance(tb_instance, score=points[lf_idx, tb_idx, 2])
             new_instances.append(tb_instance)
         
         new_lf = sleap.LabeledFrame(video=dataset.video, frame_idx=lf_idx, instances=new_instances)

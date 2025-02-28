@@ -79,12 +79,13 @@ def get_all_untracked_points(label: sleap.Labels,
                            min_score: int = 0, 
                            use_labeled_only: bool = True,
                            start_idx: int = 0, 
-                           tb_cnt: int = 17) -> np.ndarray:
+                           tb_cnt: int = 17,
+                           load_pred_score: bool = False) -> np.ndarray:
     """
     Get all untracked points from a sleap label file.
     """
     labeled_frames_to_use = label.labeled_frames[start_idx:]
-    return get_all_untracked_points_from_lbfs(labeled_frames_to_use, reorder, interpolate, min_score, use_labeled_only, start_idx, tb_cnt)
+    return get_all_untracked_points_from_lbfs(labeled_frames_to_use, reorder, interpolate, min_score, use_labeled_only, start_idx, tb_cnt, load_pred_score)
 
 def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
                                        reorder: bool = True, 
@@ -92,14 +93,15 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
                                        min_score: float = 0,
                                        use_labeled_only: bool = True,
                                        start_idx: int = 0, 
-                                       tb_cnt: int = 17) -> np.ndarray:
+                                       tb_cnt: int = 17,
+                                       load_pred_score: bool = False) -> np.ndarray:
     """
     Get all untracked points from a list of labeled frames.
     """
     frame_cnt = len(lbfs)
     # instance_cnt = len(lbfs[0].instances)
     instance_cnt = tb_cnt
-    all_untracked_points = np.zeros((frame_cnt, instance_cnt, 2))
+    all_untracked_points = np.zeros((frame_cnt, instance_cnt, 2 + int(load_pred_score)))
     print(f'all_untracked_points shape: {all_untracked_points.shape}')
     missing_point_cnt = 0
 
@@ -119,7 +121,9 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
             pt_coord = instance.points_array[0]
             if pt_coord.sum() == 0:
                 missing_point_cnt += 1
-            all_untracked_points[frame_idx - start_idx, inst_idx] = pt_coord
+            all_untracked_points[frame_idx - start_idx, inst_idx, :2] = pt_coord
+            if load_pred_score:
+                all_untracked_points[frame_idx - start_idx, inst_idx, 2] = instance.score
 
     first_non_missing_frame_idx = start_idx
     # interpolate missing coordinates
@@ -128,18 +132,18 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
         for frame_idx in range(frame_cnt):
             curr_frame_missing_point_cnt = 0
             for inst_idx in range(instance_cnt):
-                if all_untracked_points[frame_idx, inst_idx].sum() == 0:
+                if all_untracked_points[frame_idx, inst_idx, :2].sum() == 0:
                     curr_frame_missing_point_cnt += 1
-                    prev_frame_idx = get_prev_frame_idx(all_untracked_points, frame_idx, inst_idx)
-                    next_frame_idx = get_next_frame_idx(all_untracked_points, frame_idx, inst_idx)
-                    all_untracked_points[frame_idx, inst_idx] = (all_untracked_points[prev_frame_idx, inst_idx] + all_untracked_points[next_frame_idx, inst_idx]) / 2
+                    prev_frame_idx = get_prev_frame_idx(all_untracked_points[:, :, :2], frame_idx, inst_idx)
+                    next_frame_idx = get_next_frame_idx(all_untracked_points[:, :, :2], frame_idx, inst_idx)
+                    all_untracked_points[frame_idx, inst_idx, :2] = (all_untracked_points[prev_frame_idx, inst_idx, :2] + all_untracked_points[next_frame_idx, inst_idx, :2]) / 2
             if first_non_missing_frame_idx is None and curr_frame_missing_point_cnt == 0:
                 first_non_missing_frame_idx = frame_idx
                 print(f"First non missing frame idx: {first_non_missing_frame_idx}")
     print(f"Missing point count: {missing_point_cnt}")
     
     if reorder: 
-        reorder_idx = poly_4(all_untracked_points[first_non_missing_frame_idx])
+        reorder_idx = poly_4(all_untracked_points[first_non_missing_frame_idx, :, :2])
         print(f"reorder_idx.shape: {np.array(reorder_idx).shape}")
         all_untracked_points = all_untracked_points[:, reorder_idx, :]
     
