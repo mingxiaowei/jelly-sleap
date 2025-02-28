@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import datetime
 from .models import *
 
 import sys
@@ -311,7 +312,8 @@ def run_model_10(window_size=5, epochs=100, batch_size=32,
                 num_layers=2, 
                 shuffle=True,
                 dropout_rate=0.01, 
-                swap_rate=0.005):
+                swap_rate=0.005, 
+                roll=True):
     
     X_train, X_val, y_train, y_val, X = load_data(
         window_size=window_size, 
@@ -321,17 +323,23 @@ def run_model_10(window_size=5, epochs=100, batch_size=32,
         shuffle=shuffle, 
         dropout_rate=dropout_rate, 
         swap_rate=swap_rate,
+        roll=roll,
+        flatten=False,
     )
     
     model = get_model_10(window_size=window_size, num_layers=num_layers)
     model.compile(optimizer=optimizer, loss=masked_mse_loss)
     model.summary()
     
+    log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+    
     model.fit(X_train, y_train, 
               epochs=epochs, batch_size=batch_size, 
               validation_data=(X_val, y_val),
-              callbacks=[tf.keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=1)])
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=1), tensorboard_callback])
     
     denoised_coords = model.predict(X)
-    denoised_coords = denoised_coords.reshape((-1, 17, 2)) * np.array([170, 174])
+    denoised_coords = denoised_coords.reshape((-1, 17, 2))
+    # * np.array([170, 174])
     return denoised_coords

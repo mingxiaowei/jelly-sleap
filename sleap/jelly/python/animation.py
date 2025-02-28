@@ -30,7 +30,8 @@ def get_all_tracked_points(label: sleap.Labels,
                            reorder: bool = True, 
                            interpolate: bool = True,
                            min_score: int = 0, 
-                           start_idx: int = 1) -> np.ndarray:
+                           start_idx: int = 1, 
+                           use_labeled_only: bool = False) -> np.ndarray:
     """
     Get all tracked points from a sleap label file.
     """
@@ -39,11 +40,17 @@ def get_all_tracked_points(label: sleap.Labels,
     instance_cnt = len(labeled_frames_to_use[0].instances)
     all_tracked_points = np.zeros((frame_cnt, instance_cnt, 2))
     print(f'all_tracked_points shape: {all_tracked_points.shape}')
+    
+    # populate all_tracked_coords with known coordinates
+    if use_labeled_only:
+        validator = lambda inst: isinstance(inst, sleap.instance.Instance) and not isinstance(inst, sleap.instance.PredictedInstance)
+    else:
+        validator = lambda inst: isinstance(inst, sleap.instance.PredictedInstance) and inst.score >= min_score
 
     # populate all_tracked_coords with known coordinates
     for lf in labeled_frames_to_use:
         for instance in lf.instances:
-            if isinstance(instance, sleap.instance.PredictedInstance) and instance.score < min_score:
+            if not validator(instance):
                 continue
             track_idx = int(instance.track.name.split('_')[-1])
             all_tracked_points[lf.frame_idx - start_idx, track_idx] = instance.points_array[0]
@@ -68,6 +75,7 @@ def get_all_tracked_points(label: sleap.Labels,
     
     if reorder: 
         reorder_idx = poly_4(all_tracked_points[first_non_missing_frame_idx])
+        reorder_idx = np.array(reorder_idx)
         print(f"reorder_idx.shape: {reorder_idx.shape}")
         all_tracked_points = all_tracked_points[:, reorder_idx, :]
     

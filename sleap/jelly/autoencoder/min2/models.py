@@ -21,8 +21,6 @@ def masked_mse_loss(y_true, y_pred):
     mask = tf.cast(tf.logical_not(is_missing), tf.float32)  # Shape: (batch, seq_len, 17)
     
     # Compute squared error per coordinate pair.
-    print(f'y_true.shape: {y_true.shape}')
-    print(f'y_pred.shape: {y_pred.shape}')
     squared_error = tf.square(y_true - y_pred)  # Shape: (batch, seq_len, 17, 2)
     # Sum errors over the two coordinates.
     squared_error = tf.reduce_sum(squared_error, axis=-1)  # Shape: (batch, seq_len, 17)
@@ -373,6 +371,10 @@ def get_model_10(window_size=5, pt_cnt=17, num_layers=2):
     
     # Reshape output back to (batch, pt_cnt, 2)
     outputs = Reshape((pt_cnt, 2))(x)
+    
+    # Scale the outputs by normalization factors
+    norm_factors = tf.constant([170.0, 174.0])
+    outputs = layers.Lambda(lambda x: x * norm_factors)(outputs)
     
     model = Model(inputs, outputs)
     model.summary()
