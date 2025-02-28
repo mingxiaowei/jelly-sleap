@@ -181,5 +181,50 @@ def single_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a
         single_animal_dataset.save(save_path)
     
     return single_animal_dataset
-        
+
+def multi_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a valid video
+                                    points: np.ndarray,
+                                    save_path: str=None) -> sleap.Labels:
     
+    assert dataset.video, 'Dataset has no video'
+    assert dataset.video.backend.frames == points.shape[0], f'Video frame count mismatch: {dataset.video.backend.frames} != {points.shape[0]}'
+    
+    tb_cnt = points.shape[1]
+    print(f'Tentacle count: {tb_cnt}')
+    new_skeleton = sleap.Skeleton(name=f'TB')
+    new_skeleton.add_node(f'tb')
+    dataset.skeletons = [new_skeleton]
+
+    all_tracks = [None for _ in range(tb_cnt)] # assume all tb are present in frame 0
+    
+    new_labeled_frames = []
+    for lf_idx in range(dataset.video.backend.frames):
+        curr_frame = dataset.video.backend.get_frame(lf_idx)
+        new_instances = []
+        for tb_idx in range(tb_cnt):
+            x, y = points[lf_idx, tb_idx]
+            if x + y == 0 or np.isnan(x) or np.isnan(y):
+                continue
+            point_dict = {f'tb': sleap.instance.Point(x=x, y=y)}
+            if all_tracks[tb_idx] is None:
+                all_tracks[tb_idx] = sleap.instance.Track(name=f'track_{tb_idx}', spawned_on=lf_idx)
+            tb_instance = sleap.Instance(skeleton=new_skeleton, points=point_dict, frame=curr_frame, track=all_tracks[tb_idx])
+            new_instances.append(tb_instance)
+        
+        new_lf = sleap.LabeledFrame(video=dataset.video, frame_idx=lf_idx, instances=new_instances)
+        new_labeled_frames.append(new_lf)
+    
+    dataset.labeled_frames = new_labeled_frames
+    for i in range(tb_cnt):
+        if all_tracks[i] is not None:
+            dataset.tracks.append(all_tracks[i])
+        else:
+            print(f'Track {i} is not assigned')
+    
+    if save_path is not None:
+        parent_dir = os.path.dirname(save_path)
+        if not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
+        dataset.save(save_path)
+    
+    return dataset

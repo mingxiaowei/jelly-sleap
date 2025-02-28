@@ -97,7 +97,8 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
     Get all untracked points from a list of labeled frames.
     """
     frame_cnt = len(lbfs)
-    instance_cnt = len(lbfs[0].instances)
+    # instance_cnt = len(lbfs[0].instances)
+    instance_cnt = tb_cnt
     all_untracked_points = np.zeros((frame_cnt, instance_cnt, 2))
     print(f'all_untracked_points shape: {all_untracked_points.shape}')
     missing_point_cnt = 0

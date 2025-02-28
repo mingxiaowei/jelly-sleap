@@ -147,6 +147,10 @@ def get_id_mapping_array(all_tracked_points: np.ndarray) -> np.ndarray:
 
 def dataset_with_new_points(old_labels, new_points, node_name='tb', handle_first_frame=True, start_idx=0):
     corrected_label = copy(old_labels)
+    if len(corrected_label.skeletons) == 0:
+        new_skeleton = sleap.Skeleton(name=f'TB')
+        new_skeleton.add_node(f'tb')
+        corrected_label.skeletons = [new_skeleton]
     skl = corrected_label.skeletons[0]
     instance_cnt = len(corrected_label.labeled_frames[1].instances)
     

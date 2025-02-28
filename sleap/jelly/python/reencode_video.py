@@ -14,8 +14,8 @@ def reencode_video(input_file: str, output_file: str, ss_str:str=None) -> None:
     # check directory for saving outputs exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     # create ffmpeg command
-    # ffmpeg_cmd = f'ffmpeg -y -i {input_file} -ss {ss_str} -t 900 -c:v libx264 -pix_fmt yuv420p -preset superfast -crf 0 {output_file}'
-    ffmpeg_cmd = f'ffmpeg -y -i {input_file} -c:v libx264 -pix_fmt yuv420p -preset superfast -crf 0 {output_file}'
+    ffmpeg_cmd = f'ffmpeg -y -i {input_file} -ss {ss_str} -t 60 -c:v libx264 -pix_fmt yuv420p -preset superfast -crf 0 {output_file}'
+    # ffmpeg_cmd = f'ffmpeg -y -i {input_file} -c:v libx264 -pix_fmt yuv420p -preset superfast -crf 0 {output_file}'
     # run command
     subprocess.run(ffmpeg_cmd, shell=True)
 
@@ -27,6 +27,8 @@ if __name__ == "__main__":
     # ss_strs = ['00:50:00']
     # for i in range(len(ss_strs)):
         # INPUT_FILE = '/home/mingxiao/Desktop/jellyfish/video/sleap_full_video_1_higher_res.mp4'
-    INPUT_FILE = f"/home/mingxiao/Desktop/jellyfish/video/full_video_1.avi"
-    OUTPUT_FILE = f'/home/mingxiao/Desktop/jellyfish/video/video_1_clips/sleap_full_video_1_highest_res.mp4'
-    reencode_video(INPUT_FILE, OUTPUT_FILE)
+    ss_str = '01:00:00'
+    # INPUT_FILE = f"/home/mingxiao/Desktop/jellyfish/video/full_video_1.avi"
+    INPUT_FILE = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/sleap_full_video_1_highest_res.mp4'
+    OUTPUT_FILE = f'/home/mingxiao/Desktop/jellyfish/video/video_1_clips/animal_1_1h_1min.mp4'
+    reencode_video(INPUT_FILE, OUTPUT_FILE, ss_str)
