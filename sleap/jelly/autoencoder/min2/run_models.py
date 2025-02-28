@@ -1,11 +1,11 @@
 import numpy as np
 import tensorflow as tf
-from models import *
+from .models import *
 
 import sys
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/autoencoder/src')
-from data_loader import load_data
-from model_classes import *
+from src.data_loader import load_data
+from src.model_classes import *
 
 def model_runner(model, *data, 
                  epochs=50, 

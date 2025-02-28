@@ -7,7 +7,7 @@ if [ ! -d "$OUTPUT_FOLDER" ]; then
     mkdir -p "$OUTPUT_FOLDER"
 fi
 
-n_threads=10
+n_threads=50
 export OMP_NUM_THREADS=$n_threads
 export OPENBLAS_NUM_THREADS=$n_threads
 export MKL_NUM_THREADS=$n_threads
@@ -15,8 +15,8 @@ export NUMEXPR_NUM_THREADS=$n_threads
 export VECLIB_MAXIMUM_THREADS=$n_threads
 
 
-PREDICTION_PATH="/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_1m_w_scores.slp"
-OUTPUT_PATH="/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_1m_simplemax.slp"
+PREDICTION_PATH="/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/multifish_animal_1_v10.slp.250221_051111.predictions.slp"
+OUTPUT_PATH="/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/simplemax-tracking/multifish_animal_1_v10_simplemax_tracking.slp"
 
 # micromamba deactivate
 # micromamba activate sleap
@@ -25,7 +25,7 @@ sleap-track $PREDICTION_PATH \
     -o $OUTPUT_PATH \
     --video.index 0 \
     --video.input_format channels_last \
-    --batch_size 60 \
+    --batch_size 80 \
     --tracking.max_tracking 1 \
     --tracking.tracker simplemaxtracks \
     --tracking.max_tracks 17 \
