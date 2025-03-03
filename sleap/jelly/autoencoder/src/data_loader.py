@@ -166,7 +166,7 @@ def load_data(
         coords_augmented = coords_corrected.copy()
         
     coords_corrected_original = coords_corrected.copy()
-    coords_corrected_original = mean_interpolate(coords_corrected_original, coords_corrected_original)
+    coords_corrected_original = mean_interpolate(coords_corrected_original, coords_corrected_original) / np.array([170, 174])
     coords_augmented = mean_interpolate(coords_augmented, coords_augmented)
     coords_corrected = mean_interpolate(coords_corrected, coords_corrected)
     # 2. get window

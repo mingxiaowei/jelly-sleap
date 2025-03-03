@@ -7,12 +7,14 @@ from tensorflow.keras.layers import Input, ConvLSTM2D, LSTM, \
         MultiHeadAttention, LayerNormalization, Add, Conv2D, Conv1D, Multiply, Conv3D, Embedding
 from tensorflow.keras.optimizers import Adam
 
-def masked_mse_loss(y_true, y_pred):
+def masked_mse_loss(y_true, y_pred, pt_cnt=17):
     """
     Compute mean squared error (MSE) only for valid points.
     A point is considered missing if its ground truth is (0, 0).
     """
     # Create a mask: valid points get 1; missing points (0,0) get 0.
+    y_true = tf.reshape(y_true, (-1, pt_cnt, 2))
+    y_pred = tf.reshape(y_pred, (-1, pt_cnt, 2))
     is_missing = tf.logical_and(tf.equal(y_true[..., 0], 0.0),
                                 tf.equal(y_true[..., 1], 0.0))
     # is_missing = tf.math.logical_or(
@@ -344,7 +346,7 @@ class LearnablePositionalEncoding2(tf.keras.layers.Layer):
         
         return x_reshaped + pos_emb
 
-def get_model_10(window_size=5, pt_cnt=17, num_layers=2):
+def get_model_10(window_size=5, pt_cnt=17, num_layers=2, num_heads=4, key_dim=64, value_dim=64):
     # Input shape now represents (window_size, number_of_points, 2)
     inputs = Input(shape=(window_size, pt_cnt, 2))
     
@@ -354,9 +356,9 @@ def get_model_10(window_size=5, pt_cnt=17, num_layers=2):
     for _ in range(num_layers):
         # 2. Transformer Encoder Layer
         attn = MultiHeadAttention(
-            num_heads=4,
-            key_dim=64,
-            value_dim=64
+            num_heads=num_heads,
+            key_dim=key_dim,
+            value_dim=value_dim
         )(x, x)
         x = LayerNormalization()(x + attn)
         
@@ -372,10 +374,35 @@ def get_model_10(window_size=5, pt_cnt=17, num_layers=2):
     # Reshape output back to (batch, pt_cnt, 2)
     outputs = Reshape((pt_cnt, 2))(x)
     
-    # Scale the outputs by normalization factors
-    norm_factors = tf.constant([170.0, 174.0])
-    outputs = layers.Lambda(lambda x: x * norm_factors)(outputs)
+    # # Scale the outputs by normalization factors
+    # norm_factors = tf.constant([170.0, 174.0])
+    # outputs = layers.Lambda(lambda x: x * norm_factors)(outputs)
     
+    model = Model(inputs, outputs)
+    model.summary()
+    
+    return model
+
+def get_model_11(window_size=5, pt_cnt=17, latent_dim=32, num_layers=4):
+    # simple feedforward autoencoder
+    inputs = Input(shape=(window_size, pt_cnt * 2))
+    layer_dim = latent_dim * (2 ** num_layers)
+    
+    # encoder
+    for _ in range(num_layers):
+        x = Dense(layer_dim, activation='relu')(inputs)
+        layer_dim //= 2
+    x = Dense(latent_dim, activation='relu')(x)
+    
+    # decoder
+    for _ in range(num_layers):
+        x = Dense(layer_dim, activation='relu')(x)
+        layer_dim *= 2
+    
+    center_idx = window_size // 2
+    outputs = Dense(pt_cnt * 2, activation='sigmoid')(x[:, center_idx, :])
+
+
     model = Model(inputs, outputs)
     model.summary()
     
