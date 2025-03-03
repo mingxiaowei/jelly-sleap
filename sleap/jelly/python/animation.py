@@ -3,7 +3,7 @@ import sleap
 import os
 import matplotlib.pyplot as plt
 from matplotlib import animation
-from typing import Union, List
+from typing import Union, List, Callable
 from .polygon_based_correction import poly_4
 from tqdm import tqdm
 
@@ -315,12 +315,21 @@ def plot_polygon(points, order, ax, title):
     ax.axis('equal')
 
 def get_total_edge_length(points, order):
-    total = 0
-    for i in range(len(order)):
-        start = points[order[i]]
-        end = points[order[(i + 1) % len(order)]]
-        total += np.sqrt(np.sum((end - start)**2))
-    return total
+    return np.sum(get_each_edge_length(points[order]))
+
+def get_each_edge_length_single_frame(points):
+    lengths = []
+    for i in range(len(points)):
+        start = points[i]
+        end = points[(i + 1) % len(points)]
+        lengths.append(np.sqrt(np.sum((end - start)**2)))
+    return lengths
+
+def get_each_edge_length(points):
+    if points.ndim == 2:
+        return get_each_edge_length_single_frame(points)
+    else:
+        return np.array([get_each_edge_length_single_frame(points[i]) for i in range(points.shape[0])])
 
 def plot_some_polygons(points: np.ndarray, poly_constructors: list):
     poly_cnt = len(poly_constructors)
@@ -337,3 +346,20 @@ def plot_some_polygons(points: np.ndarray, poly_constructors: list):
     print("\nTotal edge lengths:")
     for i, order in enumerate(polygons):
         print(f"poly_{i+1}: {get_total_edge_length(points, order):.3f}")
+
+def plot_multiframe_polygons(points: np.ndarray, poly_constructor: Callable=poly_4):
+    assert points.ndim == 3, f'points.ndim: {points.ndim}'
+    poly_cnt = len(points)
+    polygons = [poly_constructor(pts) for pts in points]
+    _, axs = plt.subplots(1, poly_cnt, figsize=(5*poly_cnt, 5))
+    if poly_cnt == 1:
+        axs = [axs]
+    for i, order in enumerate(polygons):
+        plot_polygon(points[i], order, axs[i], f'poly_{i+1}')
+        axs[i].invert_yaxis() # invert y-axis to put (0,0) at top left
+    plt.tight_layout()
+    plt.show()
+    
+    print("\nTotal edge lengths:")
+    for i, order in enumerate(polygons):
+        print(f"poly_{i+1}: {get_total_edge_length(points[i], order):.3f}")

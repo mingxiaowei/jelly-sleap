@@ -184,6 +184,9 @@ def plot_error_count_distribution(swap_cnt_lst, missing_cnt_lst, tb_cnt=17):
     plt.xticks(range(tb_cnt + 1))
     plt.title('Error Count Distribution')
     plt.show()
+    
+    print(f'swap count: mean = {np.mean(swap_cnt_lst):.2f}, std = {np.std(swap_cnt_lst):.2f}')
+    print(f'missing count: mean = {np.mean(missing_cnt_lst):.2f}, std = {np.std(missing_cnt_lst):.2f}')
 
 def eval_discrete_points(tracked_points, frame_indices,
                          binarize=True, 
@@ -215,3 +218,72 @@ def eval_discrete_points(tracked_points, frame_indices,
     plot_error_count_distribution(swap_cnt_lst, missing_cnt_lst, tb_cnt=tb_cnt)
     
     return swap_cnt_lst, missing_cnt_lst
+
+def compare_with_gt(predicted_points, labeled_points, frame_indices, dist_thresh=10):
+    assert predicted_points.shape == labeled_points.shape, f'predicted_points.shape: {predicted_points.shape}, labeled_points.shape: {labeled_points.shape}'
+    swap_cnt_lst = []
+    missing_cnt_lst = []
+    frame_cnt, tb_cnt = predicted_points.shape[:2]
+    for i in range(frame_cnt):
+        swap_cnt = 0
+        missing_cnt = 0
+        used_nn = []
+        for j in range(tb_cnt):
+            x, y = predicted_points[i, j]
+            # x_gt, y_gt = labeled_points[i, j]
+            if np.isnan(x) or np.isnan(y) or x + y == 0:
+                missing_cnt += 1
+                continue
+            diff = labeled_points[i] - predicted_points[i, j]
+            dists = np.hypot(diff[:, 0], diff[:, 1])
+            min_dist_idx = np.argmin(dists)
+            min_dist = dists[min_dist_idx]
+            if min_dist > dist_thresh or min_dist_idx in used_nn:
+                swap_cnt += 1
+            else:
+                used_nn.append(min_dist_idx)
+        swap_cnt_lst.append(swap_cnt)
+        missing_cnt_lst.append(missing_cnt)
+    
+    plt.figure(figsize=(10, 5))
+    plt.scatter(frame_indices, swap_cnt_lst, s=10, label='Swap Count')
+    plt.scatter(frame_indices, missing_cnt_lst, s=10, label='Missing Count')
+    plt.legend()
+    plt.xlabel('Frame Number')
+    plt.ylabel('Error Count')
+    plt.yticks(range(tb_cnt + 1))
+    plt.show()
+    
+    plot_error_count_distribution(swap_cnt_lst, missing_cnt_lst, tb_cnt=tb_cnt)
+    
+    return swap_cnt_lst, missing_cnt_lst
+
+def calculate_polygon_angles(points):
+    if points.ndim == 2:
+        return calculate_polygon_angles_single_frame(points)
+    else:
+        return np.array([calculate_polygon_angles_single_frame(points[i]) for i in range(points.shape[0])])
+
+def calculate_polygon_angles_single_frame(points):
+    N = len(points)
+    angles = np.zeros(N)
+
+    for i in range(N):
+        p1 = points[i - 1]  
+        p2 = points[i]      
+        p3 = points[(i + 1) % N]  
+        
+        v1 = p1 - p2
+        v2 = p3 - p2
+        v1 /= np.linalg.norm(v1)
+        v2 /= np.linalg.norm(v2)
+
+        dot_product = np.dot(v1, v2)
+        angle_rad = np.arccos(np.clip(dot_product, -1.0, 1.0))  # Clip for numerical stability
+        angle_deg = np.degrees(angle_rad)
+        if np.cross(v1, v2) > 0:
+            angle_deg = 360 - angle_deg
+
+        angles[i] = angle_deg
+
+    return angles
