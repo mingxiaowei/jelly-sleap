@@ -5,8 +5,9 @@ from .models import *
 
 import sys
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/autoencoder/src')
-from src.data_loader import load_data
-from src.model_classes import *
+sys.path.append('..')
+from ..src.data_loader import load_data
+from ..src.model_classes import *
 
 def model_runner(model, *data, 
                  epochs=50, 

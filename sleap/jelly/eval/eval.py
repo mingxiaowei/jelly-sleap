@@ -9,7 +9,7 @@ sys.path.append('..')
 from python.animation import *
 from python.postprocess import *
 from python.polygon_based_correction import *
-
+from tensorflow.keras import backend as K
 def get_2_nn(point_idx, frame_points):
     distances = np.linalg.norm(frame_points - frame_points[point_idx], axis=1)
     sorted_indices = np.argsort(distances)
@@ -275,8 +275,8 @@ def calculate_polygon_angles_single_frame(points):
         
         v1 = p1 - p2
         v2 = p3 - p2
-        v1 /= np.linalg.norm(v1)
-        v2 /= np.linalg.norm(v2)
+        v1 /= np.linalg.norm(v1) + K.epsilon()
+        v2 /= np.linalg.norm(v2) + K.epsilon()
 
         dot_product = np.dot(v1, v2)
         angle_rad = np.arccos(np.clip(dot_product, -1.0, 1.0))  # Clip for numerical stability
