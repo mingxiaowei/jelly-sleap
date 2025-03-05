@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from typing import Union, List, Callable
-from .polygon_based_correction import poly_4
+from polygon_based_correction import poly_4
 from tqdm import tqdm
 
 def get_next_frame_idx(all_tracked_points: np.array, frame_idx: int, inst_idx: int) -> int:
