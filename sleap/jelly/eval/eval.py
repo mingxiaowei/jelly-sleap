@@ -287,3 +287,33 @@ def calculate_polygon_angles_single_frame(points):
         angles[i] = angle_deg
 
     return angles
+
+def calculate_polygon_angles(points):
+    if points.ndim == 2:
+        return calculate_polygon_angles_single_frame(points)
+    else:
+        return np.array([calculate_polygon_angles_single_frame(points[i]) for i in range(points.shape[0])])
+
+def calculate_polygon_angles_single_frame(points):
+    N = len(points)
+    angles = np.zeros(N)
+
+    for i in range(N):
+        p1 = points[i - 1]  
+        p2 = points[i]      
+        p3 = points[(i + 1) % N]  
+        
+        v1 = p1 - p2
+        v2 = p3 - p2
+        v1 /= np.linalg.norm(v1)
+        v2 /= np.linalg.norm(v2)
+
+        dot_product = np.dot(v1, v2)
+        angle_rad = np.arccos(np.clip(dot_product, -1.0, 1.0))  # Clip for numerical stability
+        angle_deg = np.degrees(angle_rad)
+        if np.cross(v1, v2) > 0:
+            angle_deg = 360 - angle_deg
+
+        angles[i] = angle_deg
+
+    return angles
