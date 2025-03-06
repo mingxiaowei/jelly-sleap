@@ -13,7 +13,8 @@ def main():
     # Create a custom scorer that focuses on recall for class 0
     recall_0_scorer = make_scorer(recall_score, pos_label=0)
 
-    X_train, X_test, y_train, y_test, X_scaled, y = load_dataset(dist_thres=3)
+    dist_thres = 6
+    X_train, X_test, y_train, y_test, X_scaled, y = load_dataset(dist_thres=dist_thres)
 
     C_range = np.logspace(-2, 4, 7)
     gamma_range = np.logspace(-2, 4, 7)
@@ -36,7 +37,7 @@ def main():
     print(classification_report(y_test, y_pred))
     
     # Save the trained model and scaler
-    model_save_path = 'svm_clf_0.joblib'
+    model_save_path = f'svm_clf_thres_{dist_thres}.joblib'
     joblib.dump(grid.best_estimator_, model_save_path)
     print(f"Model saved to {model_save_path}")
 

@@ -44,7 +44,7 @@ def get_labels(pred_pts, gt_pts, dist_thres=3):
             labels[frame_idx, pt_idx] = min_dist < dist_thres
     return labels
 
-def get_classification_dataset(pred_pts, gt_pts, dist_thres=3):
+def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=False):
     """
     Args:
         pred_pts (np.array): (frame_cnt, pt_cnt, 3); predicted points in contiguous frames, 
@@ -56,16 +56,26 @@ def get_classification_dataset(pred_pts, gt_pts, dist_thres=3):
                   4 features: prediction score, angle, 2 nn distance (current frame); nn distance (prev frame)
         labels: ((frame_cnt - 1) * pt_cnt, ); 1 = correct, 0 = incorrect 
     """
+    features, nan_mask = get_prediction_dataset(pred_pts, return_nan_mask=True)
+    labels = get_labels(pred_pts[1:, :, :2], gt_pts[1:], dist_thres)
+    labels = labels[~nan_mask]
+    if return_nan_mask:
+        return features, labels, nan_mask
+    else:
+        return features, labels
+
+def get_prediction_dataset(pred_pts, return_nan_mask=False):
     pred_pts_score = pred_pts[1:, :, 2]
     pred_pts_angle = calculate_polygon_angles(pred_pts[1:, :, :2])
     pred_pts_2nn_dist = get_2nn_dist_multi_frame(pred_pts[1:, :, :2])
     pred_pts_prev_nn_dist = get_nn_dist_prev_frame(pred_pts[:, :, :2])
     features = np.stack([pred_pts_score, pred_pts_angle, pred_pts_2nn_dist, pred_pts_prev_nn_dist], axis=2)
-    labels = get_labels(pred_pts[1:, :, :2], gt_pts[1:], dist_thres)
     nan_mask = np.isnan(features).any(axis=2)
     features = features[~nan_mask].reshape(-1, 4)
-    labels = labels[~nan_mask]
-    return features, labels
+    if return_nan_mask:
+        return features, nan_mask
+    else:
+        return features
 
 def load_dataset(dist_thres=3):
     cont_start_idx = 479850
