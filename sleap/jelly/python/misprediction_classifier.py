@@ -44,7 +44,7 @@ def get_labels(pred_pts, gt_pts, dist_thres=3):
             labels[frame_idx, pt_idx] = min_dist < dist_thres
     return labels
 
-def get_classification_dataset(pred_pts, gt_pts):
+def get_classification_dataset(pred_pts, gt_pts, dist_thres=3):
     """
     Args:
         pred_pts (np.array): (frame_cnt, pt_cnt, 3); predicted points in contiguous frames, 
@@ -61,13 +61,13 @@ def get_classification_dataset(pred_pts, gt_pts):
     pred_pts_2nn_dist = get_2nn_dist_multi_frame(pred_pts[1:, :, :2])
     pred_pts_prev_nn_dist = get_nn_dist_prev_frame(pred_pts[:, :, :2])
     features = np.stack([pred_pts_score, pred_pts_angle, pred_pts_2nn_dist, pred_pts_prev_nn_dist], axis=2)
-    labels = get_labels(pred_pts[1:, :, :2], gt_pts[1:])
+    labels = get_labels(pred_pts[1:, :, :2], gt_pts[1:], dist_thres)
     nan_mask = np.isnan(features).any(axis=2)
     features = features[~nan_mask].reshape(-1, 4)
     labels = labels[~nan_mask]
     return features, labels
 
-def load_dataset():
+def load_dataset(dist_thres=3):
     cont_start_idx = 479850
     cont_end_idx = cont_start_idx + 9000
     new_4k_dataset_path = '/home/mingxiao/Desktop/jellyfish/label/multifish/multifish_animal_1_v11.slp'
@@ -90,7 +90,7 @@ def load_dataset():
     print(labels.shape)
     print(f'{int(labels.sum())} out of {2515 * 17} ({labels.sum() / (2515 * 17):.2%}) points are correctly predicted')
 
-    cont_features, cont_labels = get_classification_dataset(cont_pred_pts_score, cont_gt_pts)
+    cont_features, cont_labels = get_classification_dataset(cont_pred_pts_score, cont_gt_pts, dist_thres)
     
     feature_cnt = 4
     X = cont_features.reshape(-1, feature_cnt)
