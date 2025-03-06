@@ -185,6 +185,7 @@ def single_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a
 def multi_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a valid video
                                     points: np.ndarray,
                                     with_score: bool=False,
+                                    add_track: bool=True,
                                     save_path: str=None) -> sleap.Labels:
     
     assert dataset.video, 'Dataset has no video'
@@ -213,11 +214,12 @@ def multi_model_dataset_with_points(dataset: sleap.Labels, # any dataset with a 
                 pt = sleap.instance.PredictedPoint(x=x, y=y, score=points[lf_idx, tb_idx, 2])
             else:
                 pt = sleap.instance.Point(x=x, y=y)
-                
-            if all_tracks[tb_idx] is None:
-                all_tracks[tb_idx] = sleap.instance.Track(name=f'track_{tb_idx}', spawned_on=lf_idx)
-                
-            tb_instance = sleap.Instance(skeleton=new_skeleton, points={f'tb': pt}, frame=curr_frame, track=all_tracks[tb_idx])
+            
+            tb_instance = sleap.Instance(skeleton=new_skeleton, points={f'tb': pt}, frame=curr_frame)
+            if add_track: 
+                if all_tracks[tb_idx] is None:
+                    all_tracks[tb_idx] = sleap.instance.Track(name=f'track_{tb_idx}', spawned_on=lf_idx)
+                tb_instance.track = all_tracks[tb_idx]
             if with_score:
                 tb_instance = sleap.instance.PredictedInstance.from_instance(tb_instance, score=points[lf_idx, tb_idx, 2])
             new_instances.append(tb_instance)
