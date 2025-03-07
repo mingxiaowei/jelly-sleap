@@ -122,6 +122,9 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
     for frame_idx, lf in tqdm(enumerate(lbfs)):
         pred_insts = [instance for instance in lf.instances if validator(instance)]
         if len(pred_insts) > tb_cnt:
+            if use_labeled_only:
+                raise ValueError(f'frame {frame_idx} has {len(pred_insts)} predicted instances')
+                # print(f'frame {frame_idx} has {len(pred_insts)} predicted instances')
             pred_inst_scores = [instance.score for instance in pred_insts]
             sorted_args = np.argsort(pred_inst_scores)[::-1][:tb_cnt]
             pred_insts = [inst for i, inst in enumerate(pred_insts) if i in sorted_args]

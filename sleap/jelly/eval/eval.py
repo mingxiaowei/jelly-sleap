@@ -317,3 +317,144 @@ def calculate_polygon_angles_single_frame(points):
         angles[i] = angle_deg
 
     return angles
+
+def get_missing_count(pts):
+    frame_cnt, pt_cnt = pts.shape[:2]
+    pts = pts[:, :, :2]
+    missing_cnt = np.zeros((frame_cnt, pt_cnt))
+    for frame_idx in range(frame_cnt):
+        for pt_idx in range(pt_cnt):
+            if pts[frame_idx, pt_idx, :].sum() == 0:
+                missing_cnt[frame_idx, pt_idx] = 1
+    return missing_cnt
+
+def animate_classification_results(
+        pred_pts: np.ndarray,  
+        gt_pts: np.ndarray,  
+        checked_labels: np.ndarray,
+        x: int = 170,
+        y: int = 174,
+        fps: int = 50,
+        bg_video: Union[sleap.Video, np.array] = None,
+        bg_video_start_idx: int = 1,
+        output_path: str = None,
+        text_dict: dict = None
+    ) -> animation.FuncAnimation:
+    if text_dict is None:
+        text_dict = {0: 'FP', 1: 'TN', 2: 'FN', 3: 'TP', -1: 'nan'}
+    if pred_pts.shape[2] == 3:
+        pred_pts = pred_pts[:, :, :2]
+        
+    pred_only = gt_pts is None
+    if pred_only:
+        gt_pts = pred_pts
+        
+    assert pred_pts.shape == gt_pts.shape, f'points shape mismatch: {pred_pts.shape} != {gt_pts.shape}'
+    
+    # if checked_labels.shape[0] == pred_pts.shape[0]:
+    #     checked_labels = checked_labels[bg_video_start_idx:]
+    checked_labels = checked_labels[bg_video_start_idx:]
+    pred_pts = pred_pts[bg_video_start_idx:]
+    gt_pts = gt_pts[bg_video_start_idx:]
+    
+    frame_cnt = gt_pts.shape[0]
+    n_plots = 1
+    
+    # Create figure with subplots
+    fig, axes = plt.subplots(1, n_plots, figsize=(8*n_plots, 8))
+    if n_plots == 1:
+        axes = [axes]  # Make axes iterable when only one subplot
+    
+    # Initialize plot elements for each subplot
+    lines = []
+    scats = []
+    bg_imgs = []
+    texts = []  # Add list to store text annotations
+    
+    vid_max_val = vid.max()
+    
+    for ax in axes:
+        ax.set_xlim(0, x)
+        ax.set_ylim(0, y)
+        ax.invert_yaxis()
+        
+        # Initialize empty line and scatter objects for each subplot
+        line, = ax.plot([], [], 'b-', lw=1)
+        pred_scat = ax.scatter([], [], c='red', s=30)
+        gt_scat = ax.scatter([], [], c='green', s=30)
+        bg_img = ax.imshow(np.zeros((y, x)), cmap='gray', vmin=0, vmax=vid_max_val)
+        
+        # Initialize empty text annotations
+        frame_texts = []
+        for _ in range(pred_pts.shape[1]):  # number of points per frame
+            txt = ax.text(0, 0, '', fontsize=8, color='blue')
+            frame_texts.append(txt)
+        
+        lines.append(line)
+        scats.append([pred_scat, gt_scat])
+        bg_imgs.append(bg_img)
+        texts.append(frame_texts)
+
+    def init():
+        plot_elements = []
+        for line, (pred_scat, gt_scat), bg_img, frame_texts in zip(lines, scats, bg_imgs, texts):
+            line.set_data([], [])
+            pred_scat.set_offsets(np.zeros((0, 2)))
+            gt_scat.set_offsets(np.zeros((0, 2)))
+            for txt in frame_texts:
+                txt.set_position((0, 0))
+                txt.set_text('')
+            if pred_only:
+                plot_elements.extend([pred_scat, bg_img] + frame_texts)
+            else:
+                plot_elements.extend([pred_scat, gt_scat, bg_img] + frame_texts)
+        return plot_elements
+
+    def animate(frame):
+        plot_elements = []
+        
+        # Update background
+        if bg_video is not None:
+            if isinstance(bg_video, sleap.Video):
+                bg_frame = bg_video.get_frame(frame + bg_video_start_idx)[:, :, 0]
+            else:
+                bg_frame = bg_video[frame + bg_video_start_idx]
+            for bg_img in bg_imgs:
+                bg_img.set_array(bg_frame)
+        
+        # Update each subplot
+        for i, (pred_pt, gt_pt, checked_label, line, (pred_scat, gt_scat), frame_texts) in enumerate(
+            zip([pred_pts], [gt_pts], [checked_labels], lines, scats, texts)):
+            
+            pred_points = pred_pt[frame]
+            gt_points = gt_pt[frame]
+            # pred_points_closed = np.vstack([pred_points, pred_points[0]])
+            # gt_points_closed = np.vstack([gt_points, gt_points[0]])
+            label_check = checked_label[frame]  # Get labels for current frame
+            # Update scatter plots
+            pred_scat.set_offsets(pred_points)
+            gt_scat.set_offsets(gt_points)
+            
+            # Update text annotations
+            for j, (point, is_correct) in enumerate(zip(pred_points, label_check)):
+                txt = frame_texts[j]
+                txt.set_position((point[0] + 2, point[1] + 2))  # Offset text slightly from point
+                txt.set_text(text_dict[is_correct])
+            
+            plot_elements.extend([pred_scat, gt_scat, bg_imgs[i]] + frame_texts)
+            
+        return plot_elements
+
+    # Create animation
+    anim = animation.FuncAnimation(fig, animate, init_func=init, 
+                                 frames=frame_cnt, interval=50, blit=True)
+
+    # Optional: save animation
+    if output_path is not None:
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
+        anim.save(output_path, writer='ffmpeg', fps=fps)
+        print(f"Animation saved to {output_path}")
+        
+    plt.tight_layout()
+    return anim
