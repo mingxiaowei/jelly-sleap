@@ -223,7 +223,7 @@ def get_animation_from_tracked_points(
         x: int,
         y: int,
         fps: int = 50,
-        bg_video: sleap.Video = None,
+        bg_video: Union[sleap.Video, np.array] = None,
         bg_video_start_idx: int = 1,
         output_path: str = None
     ) -> animation.FuncAnimation:
@@ -232,6 +232,9 @@ def get_animation_from_tracked_points(
         tracked_points_lst = [tracked_points_lst]
     frame_cnt = tracked_points_lst[0].shape[0]
     n_plots = len(tracked_points_lst)
+    
+    if bg_video is None:
+        bg_video = np.ones((frame_cnt, y, x, 1))
     
     # Create figure with subplots
     fig, axes = plt.subplots(1, n_plots, figsize=(8*n_plots, 8))
@@ -251,7 +254,7 @@ def get_animation_from_tracked_points(
         # Initialize empty line and scatter objects for each subplot
         line, = ax.plot([], [], 'b-', lw=1)
         scat = ax.scatter([], [], c='red', s=30)
-        bg_img = ax.imshow(np.zeros((y, x)), cmap='gray', vmin=0, vmax=255)
+        bg_img = ax.imshow(np.zeros((y, x)), cmap='gray', vmin=0, vmax=1)
         
         lines.append(line)
         scats.append(scat)
@@ -270,7 +273,11 @@ def get_animation_from_tracked_points(
         
         # Update background (same for all subplots)
         if bg_video is not None:
-            bg_frame = bg_video.get_frame(frame + bg_video_start_idx)
+            if isinstance(bg_video, np.ndarray):
+                bg_frame = bg_video[frame + bg_video_start_idx]
+            else:
+                bg_frame = bg_video.get_frame(frame + bg_video_start_idx)
+                
             for bg_img in bg_imgs:
                 bg_img.set_array(bg_frame[:, :, 0])
         
