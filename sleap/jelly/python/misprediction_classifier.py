@@ -234,8 +234,8 @@ def custom_resample(X, y, minority_class=0, minor_to_major_ratio=0.5, dowmsample
 def grid_search_with_resampling(X, y, model, param_grid, 
                                 n_splits=5, 
                                 minority_class=0, 
-                                minor_to_major_ratio=0.5,
-                                dowmsample_majority_ratio=1):
+                                minor_to_major_ratio=0.2,
+                                dowmsample_majority_ratio=0.8):
     """
     Perform grid search with resampling in each fold
     """

@@ -73,3 +73,38 @@ def polar_interpolate(curr_frame_pts, frame_idx=None, non_missing_mask=None, cen
 
     cart_interpolated_pts = np.roll(cart_interpolated_pts, first_non_missing_idx, axis=0)
     return cart_interpolated_pts
+
+def plot_pred_vs_gt_pts(pred_pts, gt_pts, center_pos=None, canvas_size=(170, 170)):
+    assert pred_pts.shape == gt_pts.shape, f'shape mismatch: {pred_pts.shape} != {gt_pts.shape}'
+    if center_pos is None:
+        center_pos = gt_pts.mean(axis=0)
+        
+    plt.axis('equal')
+    plt.scatter(gt_pts[:, 0], gt_pts[:, 1], color='green', label='true')
+    plt.scatter(pred_pts[:, 0], pred_pts[:, 1], color='blue', label='interpolated')
+    plt.scatter(center_pos[0], center_pos[1], color='red')
+    
+    for i, (x, y) in enumerate(gt_pts):
+        plt.annotate(str(i), (x, y), 
+                    xytext=(5, 5),  # 5 points offset
+                    textcoords='offset points',
+                    fontsize=8)
+     
+    plt.legend(fontsize=8, bbox_to_anchor=(1, 1))
+    plt.axis('equal')
+    plt.show()
+    
+def test_single_frame_polar_interpolation(gt_pts, frame_idx):
+    curr_frame_pts = gt_pts[frame_idx]
+    poly_order = poly_4(curr_frame_pts)
+    curr_frame_pts = curr_frame_pts[poly_order]
+    interp_pts = np.zeros_like(curr_frame_pts)
+    for pt_idx in range(curr_frame_pts.shape[0]):
+        curr_frame_pts_copy = curr_frame_pts.copy()
+        curr_frame_pts_copy[pt_idx] = (0, 0)
+        interp_pts[pt_idx] = polar_interpolate(curr_frame_pts_copy, verbose=False)[pt_idx]
+    plot_pred_vs_gt_pts(interp_pts, curr_frame_pts)
+    mean_err = np.linalg.norm(interp_pts - curr_frame_pts, axis=1).mean()
+    print(f'mean error (pixel): {mean_err:.2f}')
+
+    
