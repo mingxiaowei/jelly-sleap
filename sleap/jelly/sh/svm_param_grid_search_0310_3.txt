@@ -4,3 +4,1098 @@ all_untracked_points shape: (3000, 17, 3)
 Missing point count: 0
 reorder_idx.shape: (17,)
 all_untracked_points shape: (3000, 17, 2)
+Missing point count: 0
+reorder_idx.shape: (17,)
+total point count = 50983, correct = 49555, incorrect = 1428
+(50038, 4) (50038,)
+Params: {'C': 0.001, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.001}
+Score: 0.569
+              precision    recall  f1-score   support
+
+         0.0       0.36      0.57      0.44        51
+         1.0       1.00      0.99      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.68      0.78      0.72      5004
+weighted avg       0.99      0.99      0.99      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Score: 0.725
+              precision    recall  f1-score   support
+
+         0.0       0.14      0.73      0.23        51
+         1.0       1.00      0.95      0.97      4953
+
+    accuracy                           0.95      5004
+   macro avg       0.57      0.84      0.60      5004
+weighted avg       0.99      0.95      0.97      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Score: 0.922
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.92      0.14        51
+         1.0       1.00      0.88      0.94      4953
+
+    accuracy                           0.88      5004
+   macro avg       0.54      0.90      0.54      5004
+weighted avg       0.99      0.88      0.93      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Score: 0.961
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.96      0.11        51
+         1.0       1.00      0.84      0.91      4953
+
+    accuracy                           0.84      5004
+   macro avg       0.53      0.90      0.51      5004
+weighted avg       0.99      0.84      0.90      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.03      1.00      0.06        51
+         1.0       1.00      0.66      0.79      4953
+
+    accuracy                           0.66      5004
+   macro avg       0.51      0.83      0.42      5004
+weighted avg       0.99      0.66      0.79      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 5, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.001}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.01      1.00      0.02        51
+         1.0       0.00      0.00      0.00      4953
+
+    accuracy                           0.01      5004
+   macro avg       0.01      0.50      0.01      5004
+weighted avg       0.00      0.01      0.00      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.01}
+Score: 0.922
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.92      0.12        51
+         1.0       1.00      0.87      0.93      4953
+
+    accuracy                           0.87      5004
+   macro avg       0.53      0.89      0.53      5004
+weighted avg       0.99      0.87      0.92      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.1}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.94      0.10        51
+         1.0       1.00      0.83      0.91      4953
+
+    accuracy                           0.83      5004
+   macro avg       0.53      0.89      0.51      5004
+weighted avg       0.99      0.83      0.90      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 10, 1: 1}, 'gamma': 1.0}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.04      0.98      0.09        51
+         1.0       1.00      0.78      0.88      4953
+
+    accuracy                           0.79      5004
+   macro avg       0.52      0.88      0.48      5004
+weighted avg       0.99      0.79      0.87      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 10, 1: 1}, 'gamma': 10.0}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.01      1.00      0.02        51
+         1.0       1.00      0.02      0.05      4953
+
+    accuracy                           0.03      5004
+   macro avg       0.51      0.51      0.03      5004
+weighted avg       0.99      0.03      0.05      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 10, 1: 1}, 'gamma': 100.0}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.01      1.00      0.02        51
+         1.0       0.00      0.00      0.00      4953
+
+    accuracy                           0.01      5004
+   macro avg       0.01      0.50      0.01      5004
+weighted avg       0.00      0.01      0.00      5004
+
+Params: {'C': 0.001, 'class_weight': {0: 10, 1: 1}, 'gamma': 1000.0}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.01      1.00      0.02        51
+         1.0       0.00      0.00      0.00      4953
+
+    accuracy                           0.01      5004
+   macro avg       0.01      0.50      0.01      5004
+weighted avg       0.00      0.01      0.00      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.001}
+Score: 0.725
+              precision    recall  f1-score   support
+
+         0.0       0.14      0.73      0.23        51
+         1.0       1.00      0.95      0.97      4953
+
+    accuracy                           0.95      5004
+   macro avg       0.57      0.84      0.60      5004
+weighted avg       0.99      0.95      0.97      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Score: 0.922
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.92      0.15        51
+         1.0       1.00      0.89      0.94      4953
+
+    accuracy                           0.89      5004
+   macro avg       0.54      0.91      0.54      5004
+weighted avg       0.99      0.89      0.93      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.94      0.13        51
+         1.0       1.00      0.87      0.93      4953
+
+    accuracy                           0.87      5004
+   macro avg       0.53      0.90      0.53      5004
+weighted avg       0.99      0.87      0.92      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Score: 0.961
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.96      0.13        51
+         1.0       1.00      0.87      0.93      4953
+
+    accuracy                           0.87      5004
+   macro avg       0.53      0.91      0.53      5004
+weighted avg       0.99      0.87      0.92      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.98      0.12        51
+         1.0       1.00      0.85      0.92      4953
+
+    accuracy                           0.85      5004
+   macro avg       0.53      0.92      0.52      5004
+weighted avg       0.99      0.85      0.91      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.001}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.94      0.13        51
+         1.0       1.00      0.87      0.93      4953
+
+    accuracy                           0.87      5004
+   macro avg       0.53      0.90      0.53      5004
+weighted avg       0.99      0.87      0.92      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.01}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.11        51
+         1.0       1.00      0.84      0.91      4953
+
+    accuracy                           0.84      5004
+   macro avg       0.53      0.89      0.51      5004
+weighted avg       0.99      0.84      0.90      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.1}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.98      0.10        51
+         1.0       1.00      0.81      0.90      4953
+
+    accuracy                           0.82      5004
+   macro avg       0.53      0.90      0.50      5004
+weighted avg       0.99      0.82      0.89      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 10, 1: 1}, 'gamma': 1.0}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.98      0.10        51
+         1.0       1.00      0.81      0.89      4953
+
+    accuracy                           0.81      5004
+   macro avg       0.53      0.90      0.50      5004
+weighted avg       0.99      0.81      0.89      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 10, 1: 1}, 'gamma': 10.0}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.05      1.00      0.10        51
+         1.0       1.00      0.81      0.90      4953
+
+    accuracy                           0.81      5004
+   macro avg       0.53      0.91      0.50      5004
+weighted avg       0.99      0.81      0.89      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 10, 1: 1}, 'gamma': 100.0}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.01      1.00      0.03        51
+         1.0       1.00      0.30      0.46      4953
+
+    accuracy                           0.31      5004
+   macro avg       0.51      0.65      0.25      5004
+weighted avg       0.99      0.31      0.46      5004
+
+Params: {'C': 0.01, 'class_weight': {0: 10, 1: 1}, 'gamma': 1000.0}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.01      1.00      0.02        51
+         1.0       0.00      0.00      0.00      4953
+
+    accuracy                           0.01      5004
+   macro avg       0.01      0.50      0.01      5004
+weighted avg       0.00      0.01      0.00      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.001}
+Score: 0.922
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.92      0.15        51
+         1.0       1.00      0.89      0.94      4953
+
+    accuracy                           0.89      5004
+   macro avg       0.54      0.91      0.54      5004
+weighted avg       0.99      0.89      0.93      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Score: 0.922
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.92      0.13        51
+         1.0       1.00      0.88      0.93      4953
+
+    accuracy                           0.88      5004
+   macro avg       0.54      0.90      0.53      5004
+weighted avg       0.99      0.88      0.93      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.12        51
+         1.0       1.00      0.86      0.92      4953
+
+    accuracy                           0.86      5004
+   macro avg       0.53      0.90      0.52      5004
+weighted avg       0.99      0.86      0.91      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.94      0.15        51
+         1.0       1.00      0.89      0.94      4953
+
+    accuracy                           0.89      5004
+   macro avg       0.54      0.92      0.55      5004
+weighted avg       0.99      0.89      0.94      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Score: 0.549
+              precision    recall  f1-score   support
+
+         0.0       0.11      0.55      0.18        51
+         1.0       1.00      0.95      0.97      4953
+
+    accuracy                           0.95      5004
+   macro avg       0.55      0.75      0.58      5004
+weighted avg       0.99      0.95      0.97      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.54      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.001}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.11        51
+         1.0       1.00      0.84      0.91      4953
+
+    accuracy                           0.84      5004
+   macro avg       0.53      0.89      0.51      5004
+weighted avg       0.99      0.84      0.90      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.01}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.94      0.10        51
+         1.0       1.00      0.82      0.90      4953
+
+    accuracy                           0.82      5004
+   macro avg       0.53      0.88      0.50      5004
+weighted avg       0.99      0.82      0.89      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.1}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.98      0.09        51
+         1.0       1.00      0.80      0.89      4953
+
+    accuracy                           0.80      5004
+   macro avg       0.52      0.89      0.49      5004
+weighted avg       0.99      0.80      0.88      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 10, 1: 1}, 'gamma': 1.0}
+Score: 0.961
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.96      0.10        51
+         1.0       1.00      0.83      0.91      4953
+
+    accuracy                           0.83      5004
+   macro avg       0.53      0.90      0.51      5004
+weighted avg       0.99      0.83      0.90      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 10, 1: 1}, 'gamma': 10.0}
+Score: 0.569
+              precision    recall  f1-score   support
+
+         0.0       0.11      0.57      0.18        51
+         1.0       1.00      0.95      0.97      4953
+
+    accuracy                           0.95      5004
+   macro avg       0.55      0.76      0.57      5004
+weighted avg       0.99      0.95      0.96      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 10, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.54      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 0.1, 'class_weight': {0: 10, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.001}
+Score: 0.922
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.92      0.14        51
+         1.0       1.00      0.88      0.94      4953
+
+    accuracy                           0.88      5004
+   macro avg       0.54      0.90      0.54      5004
+weighted avg       0.99      0.88      0.93      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.12        51
+         1.0       1.00      0.86      0.92      4953
+
+    accuracy                           0.86      5004
+   macro avg       0.53      0.90      0.52      5004
+weighted avg       0.99      0.86      0.92      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.94      0.12        51
+         1.0       1.00      0.86      0.93      4953
+
+    accuracy                           0.87      5004
+   macro avg       0.53      0.90      0.53      5004
+weighted avg       0.99      0.87      0.92      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Score: 0.824
+              precision    recall  f1-score   support
+
+         0.0       0.10      0.82      0.17        51
+         1.0       1.00      0.92      0.96      4953
+
+    accuracy                           0.92      5004
+   macro avg       0.55      0.87      0.56      5004
+weighted avg       0.99      0.92      0.95      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Score: 0.412
+              precision    recall  f1-score   support
+
+         0.0       0.17      0.41      0.24        51
+         1.0       0.99      0.98      0.99      4953
+
+    accuracy                           0.97      5004
+   macro avg       0.58      0.70      0.62      5004
+weighted avg       0.99      0.97      0.98      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.001}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.10        51
+         1.0       1.00      0.83      0.91      4953
+
+    accuracy                           0.83      5004
+   macro avg       0.53      0.89      0.51      5004
+weighted avg       0.99      0.83      0.90      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.01}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.98      0.10        51
+         1.0       1.00      0.81      0.89      4953
+
+    accuracy                           0.81      5004
+   macro avg       0.53      0.89      0.50      5004
+weighted avg       0.99      0.81      0.89      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.1}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.05      1.00      0.09        51
+         1.0       1.00      0.80      0.89      4953
+
+    accuracy                           0.80      5004
+   macro avg       0.52      0.90      0.49      5004
+weighted avg       0.99      0.80      0.88      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 1.0}
+Score: 0.882
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.88      0.13        51
+         1.0       1.00      0.88      0.93      4953
+
+    accuracy                           0.88      5004
+   macro avg       0.53      0.88      0.53      5004
+weighted avg       0.99      0.88      0.93      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 10.0}
+Score: 0.412
+              precision    recall  f1-score   support
+
+         0.0       0.17      0.41      0.24        51
+         1.0       0.99      0.98      0.99      4953
+
+    accuracy                           0.97      5004
+   macro avg       0.58      0.70      0.62      5004
+weighted avg       0.99      0.97      0.98      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 1.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.001}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.94      0.14        51
+         1.0       1.00      0.88      0.93      4953
+
+    accuracy                           0.88      5004
+   macro avg       0.54      0.91      0.53      5004
+weighted avg       0.99      0.88      0.93      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.11        51
+         1.0       1.00      0.85      0.92      4953
+
+    accuracy                           0.85      5004
+   macro avg       0.53      0.90      0.52      5004
+weighted avg       0.99      0.85      0.91      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.07      0.94      0.13        51
+         1.0       1.00      0.87      0.93      4953
+
+    accuracy                           0.87      5004
+   macro avg       0.54      0.91      0.53      5004
+weighted avg       0.99      0.87      0.92      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Score: 0.706
+              precision    recall  f1-score   support
+
+         0.0       0.10      0.71      0.18        51
+         1.0       1.00      0.94      0.97      4953
+
+    accuracy                           0.93      5004
+   macro avg       0.55      0.82      0.57      5004
+weighted avg       0.99      0.93      0.96      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Score: 0.294
+              precision    recall  f1-score   support
+
+         0.0       0.19      0.29      0.23        51
+         1.0       0.99      0.99      0.99      4953
+
+    accuracy                           0.98      5004
+   macro avg       0.59      0.64      0.61      5004
+weighted avg       0.98      0.98      0.98      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.001}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.94      0.10        51
+         1.0       1.00      0.82      0.90      4953
+
+    accuracy                           0.82      5004
+   macro avg       0.53      0.88      0.50      5004
+weighted avg       0.99      0.82      0.89      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.01}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.98      0.09        51
+         1.0       1.00      0.80      0.89      4953
+
+    accuracy                           0.80      5004
+   macro avg       0.52      0.89      0.49      5004
+weighted avg       0.99      0.80      0.88      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.1}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.05      1.00      0.10        51
+         1.0       1.00      0.82      0.90      4953
+
+    accuracy                           0.82      5004
+   macro avg       0.53      0.91      0.50      5004
+weighted avg       0.99      0.82      0.89      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 1.0}
+Score: 0.706
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.71      0.14        51
+         1.0       1.00      0.91      0.95      4953
+
+    accuracy                           0.91      5004
+   macro avg       0.54      0.81      0.54      5004
+weighted avg       0.99      0.91      0.94      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 10.0}
+Score: 0.294
+              precision    recall  f1-score   support
+
+         0.0       0.19      0.29      0.23        51
+         1.0       0.99      0.99      0.99      4953
+
+    accuracy                           0.98      5004
+   macro avg       0.59      0.64      0.61      5004
+weighted avg       0.98      0.98      0.98      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 10.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.001}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.12        51
+         1.0       1.00      0.86      0.92      4953
+
+    accuracy                           0.86      5004
+   macro avg       0.53      0.90      0.52      5004
+weighted avg       0.99      0.86      0.92      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.12        51
+         1.0       1.00      0.85      0.92      4953
+
+    accuracy                           0.85      5004
+   macro avg       0.53      0.90      0.52      5004
+weighted avg       0.99      0.85      0.91      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Score: 0.961
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.96      0.15        51
+         1.0       1.00      0.88      0.94      4953
+
+    accuracy                           0.88      5004
+   macro avg       0.54      0.92      0.54      5004
+weighted avg       0.99      0.88      0.93      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Score: 0.529
+              precision    recall  f1-score   support
+
+         0.0       0.10      0.53      0.17        51
+         1.0       0.99      0.95      0.97      4953
+
+    accuracy                           0.95      5004
+   macro avg       0.55      0.74      0.57      5004
+weighted avg       0.99      0.95      0.97      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Score: 0.235
+              precision    recall  f1-score   support
+
+         0.0       0.21      0.24      0.22        51
+         1.0       0.99      0.99      0.99      4953
+
+    accuracy                           0.98      5004
+   macro avg       0.60      0.61      0.61      5004
+weighted avg       0.98      0.98      0.98      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.001}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.98      0.10        51
+         1.0       1.00      0.81      0.90      4953
+
+    accuracy                           0.81      5004
+   macro avg       0.53      0.90      0.50      5004
+weighted avg       0.99      0.81      0.89      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.01}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.98      0.09        51
+         1.0       1.00      0.79      0.89      4953
+
+    accuracy                           0.80      5004
+   macro avg       0.52      0.89      0.49      5004
+weighted avg       0.99      0.80      0.88      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.1}
+Score: 0.961
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.96      0.10        51
+         1.0       1.00      0.83      0.91      4953
+
+    accuracy                           0.83      5004
+   macro avg       0.53      0.90      0.51      5004
+weighted avg       0.99      0.83      0.90      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 1.0}
+Score: 0.529
+              precision    recall  f1-score   support
+
+         0.0       0.09      0.53      0.15        51
+         1.0       0.99      0.94      0.97      4953
+
+    accuracy                           0.94      5004
+   macro avg       0.54      0.74      0.56      5004
+weighted avg       0.99      0.94      0.96      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 10.0}
+Score: 0.235
+              precision    recall  f1-score   support
+
+         0.0       0.21      0.24      0.22        51
+         1.0       0.99      0.99      0.99      4953
+
+    accuracy                           0.98      5004
+   macro avg       0.60      0.61      0.61      5004
+weighted avg       0.98      0.98      0.98      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 100.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.001}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.12        51
+         1.0       1.00      0.85      0.92      4953
+
+    accuracy                           0.85      5004
+   macro avg       0.53      0.90      0.52      5004
+weighted avg       0.99      0.85      0.91      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.94      0.12        51
+         1.0       1.00      0.86      0.92      4953
+
+    accuracy                           0.86      5004
+   macro avg       0.53      0.90      0.52      5004
+weighted avg       0.99      0.86      0.92      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Score: 0.941
+              precision    recall  f1-score   support
+
+         0.0       0.08      0.94      0.15        51
+         1.0       1.00      0.89      0.94      4953
+
+    accuracy                           0.89      5004
+   macro avg       0.54      0.92      0.54      5004
+weighted avg       0.99      0.89      0.93      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Score: 0.549
+              precision    recall  f1-score   support
+
+         0.0       0.14      0.55      0.22        51
+         1.0       1.00      0.96      0.98      4953
+
+    accuracy                           0.96      5004
+   macro avg       0.57      0.76      0.60      5004
+weighted avg       0.99      0.96      0.97      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Score: 0.235
+              precision    recall  f1-score   support
+
+         0.0       0.21      0.24      0.22        51
+         1.0       0.99      0.99      0.99      4953
+
+    accuracy                           0.98      5004
+   macro avg       0.60      0.61      0.61      5004
+weighted avg       0.98      0.98      0.98      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.001}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.05      0.98      0.09        51
+         1.0       1.00      0.81      0.89      4953
+
+    accuracy                           0.81      5004
+   macro avg       0.52      0.89      0.49      5004
+weighted avg       0.99      0.81      0.88      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.01}
+Score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.05      1.00      0.09        51
+         1.0       1.00      0.80      0.89      4953
+
+    accuracy                           0.80      5004
+   macro avg       0.52      0.90      0.49      5004
+weighted avg       0.99      0.80      0.88      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 0.1}
+Score: 0.980
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.98      0.11        51
+         1.0       1.00      0.84      0.91      4953
+
+    accuracy                           0.84      5004
+   macro avg       0.53      0.91      0.51      5004
+weighted avg       0.99      0.84      0.91      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 1.0}
+Score: 0.549
+              precision    recall  f1-score   support
+
+         0.0       0.14      0.55      0.22        51
+         1.0       1.00      0.96      0.98      4953
+
+    accuracy                           0.96      5004
+   macro avg       0.57      0.76      0.60      5004
+weighted avg       0.99      0.96      0.97      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 10.0}
+Score: 0.235
+              precision    recall  f1-score   support
+
+         0.0       0.21      0.24      0.22        51
+         1.0       0.99      0.99      0.99      4953
+
+    accuracy                           0.98      5004
+   macro avg       0.60      0.61      0.61      5004
+weighted avg       0.98      0.98      0.98      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 100.0}
+Score: 0.020
+              precision    recall  f1-score   support
+
+         0.0       0.12      0.02      0.03        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.56      0.51      0.51      5004
+weighted avg       0.98      0.99      0.98      5004
+
+Params: {'C': 1000.0, 'class_weight': {0: 10, 1: 1}, 'gamma': 1000.0}
+Score: 0.000
+              precision    recall  f1-score   support
+
+         0.0       0.00      0.00      0.00        51
+         1.0       0.99      1.00      0.99      4953
+
+    accuracy                           0.99      5004
+   macro avg       0.49      0.50      0.50      5004
+weighted avg       0.98      0.99      0.98      5004
+
+
+Best parameters: {'C': 0.001, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Best score: 1.000
+              precision    recall  f1-score   support
+
+         0.0       0.03      0.99      0.05       483
+         1.0       1.00      0.66      0.79     49555
+
+    accuracy                           0.66     50038
+   macro avg       0.51      0.82      0.42     50038
+weighted avg       0.99      0.66      0.79     50038
+
+Model saved to svm_clf_20s_v3.joblib

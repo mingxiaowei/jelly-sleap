@@ -15,7 +15,7 @@ def get_2nn_dist_multi_frame(pts):
     frame_cnt, pt_cnt = pts.shape[:2]
     pts_2nn_dist = np.full((frame_cnt, pt_cnt), -1, dtype=np.float32) # -1 means missing
     for i in range(frame_cnt):
-        non_missing_mask = pts[i].sum(axis=1) > 0
+        non_missing_mask = (pts[i].sum(axis=1) > 0) | ~(np.isnan(pts[i]).any(axis=1))
         non_missing_pts = pts[i][non_missing_mask]
         edge_lengths = get_each_edge_length(non_missing_pts) # (pt_cnt,)
         shifted_edge_lengths = np.roll(edge_lengths, 1)
@@ -76,7 +76,7 @@ def get_labels(pred_pts, gt_pts, dist_thres=3):
                 
     return labels
 
-def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=False):
+def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=False, load_2nn_dist=True):
     """
     Args:
         pred_pts (np.array): (frame_cnt, pt_cnt, 3); predicted points in contiguous frames, 
@@ -88,7 +88,7 @@ def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=F
                   4 features: prediction score, angle, 2 nn distance (current frame); nn distance (prev frame)
         labels: ((frame_cnt - 1) * pt_cnt, ); 1 = correct, 0 = incorrect 
     """
-    features, nan_mask = get_prediction_dataset(pred_pts, return_nan_mask=True)
+    features, nan_mask = get_prediction_dataset(pred_pts, return_nan_mask=True, load_2nn_dist=load_2nn_dist)
     labels = get_labels(pred_pts[1:, :, :2], gt_pts[1:], dist_thres)
     labels = labels[~nan_mask]
     if return_nan_mask:
@@ -96,17 +96,21 @@ def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=F
     else:
         return features, labels
 
-def get_prediction_dataset(pred_pts, return_nan_mask=False):
+def get_prediction_dataset(pred_pts, return_nan_mask=False, load_2nn_dist=True):
     pred_pts_score = pred_pts[1:, :, 2]
     pred_pts_angle = calculate_polygon_angles(pred_pts[1:, :, :2])
-    pred_pts_2nn_dist = get_2nn_dist_multi_frame(pred_pts[1:, :, :2])
     pred_pts_prev_nn_dist = get_nn_dist_prev_frame(pred_pts[:, :, :2])
-    features = np.stack([pred_pts_score, pred_pts_angle, pred_pts_2nn_dist, pred_pts_prev_nn_dist], axis=2)
+    feat_cnt = 3 + load_2nn_dist
+    if load_2nn_dist:
+        pred_pts_2nn_dist = get_2nn_dist_multi_frame(pred_pts[1:, :, :2])
+        features = np.stack([pred_pts_score, pred_pts_angle, pred_pts_2nn_dist, pred_pts_prev_nn_dist], axis=2)
+    else:
+        features = np.stack([pred_pts_score, pred_pts_angle, pred_pts_prev_nn_dist], axis=2)
     
     nan_mask = np.isnan(features).any(axis=2)
     missing_mask = get_missing_count(pred_pts[1:, :, :2]) > 0 # 1 = missing, 0 = present
     nan_mask = np.logical_or(nan_mask, missing_mask)
-    features = features[~nan_mask].reshape(-1, 4)
+    features = features[~nan_mask].reshape(-1, feat_cnt)
     
     if return_nan_mask:
         return features, nan_mask
@@ -152,7 +156,20 @@ def load_dataset(dist_thres=3):
     
     return X_train, X_test, y_train, y_test, X_scaled, y, scaler
 
-def load_20s_dataset(dist_thres=3):
+def augment_pred_pts(pred_pts, augment_rate=0.5):
+    pred_pts_augmented = pred_pts[:, :, :2].copy()
+    missing_cnt = get_missing_count(pred_pts_augmented)
+    selected_frames = np.random.choice(pred_pts_augmented.shape[0], int(pred_pts_augmented.shape[0] * augment_rate), replace=False)
+
+    for frame_idx in selected_frames:
+        aug_candidates = np.where(missing_cnt[frame_idx] == 0)[0]
+        aug_pt_indices = np.random.choice(aug_candidates, np.random.randint(1, 4), replace=False)
+        for pt_idx in aug_pt_indices:
+            pred_pts_augmented[frame_idx, pt_idx] += np.random.normal(10, 3, size=2)
+    
+    return pred_pts_augmented
+
+def load_20s_dataset(dist_thres=3, load_2nn_dist=True, augment_rate=None):
     predicted_dataset_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_with_scores.slp'
     predicted_dataset = sleap.load_file(predicted_dataset_path)
     print(predicted_dataset)
@@ -165,9 +182,12 @@ def load_20s_dataset(dist_thres=3):
                                                     interpolate=False, use_labeled_only=False, load_pred_score=True)
     gt_pts = get_all_untracked_points(corrected_dataset, interpolate=False, use_labeled_only=True)
     
-    cont_features, cont_labels = get_classification_dataset(pred_pts_with_scores, gt_pts, dist_thres)
+    if augment_rate is not None:
+        pred_pts_with_scores[2:, :, :2] = augment_pred_pts(pred_pts_with_scores[2:, :, :2], augment_rate)
     
-    feature_cnt = 4
+    cont_features, cont_labels = get_classification_dataset(pred_pts_with_scores, gt_pts, dist_thres=dist_thres, load_2nn_dist=load_2nn_dist)
+    
+    feature_cnt = 3 + load_2nn_dist
     X = cont_features.reshape(-1, feature_cnt)
     y = cont_labels.flatten()
     print(X.shape, y.shape)

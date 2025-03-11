@@ -25,12 +25,13 @@ class Logger:
 # ... existing code ...
 
 # Set up logging at the start of your analysis
-log_file = 'svm_param_grid_search_0310_3.txt'
+log_file = 'svm_param_grid_search_0310_4.txt'
 sys.stdout = Logger(log_file)
 
 def main():
 
-    X_train, X_test, y_train, y_test, X, y, scaler = load_20s_dataset()
+    X_train, X_test, y_train, y_test, X, y, scaler = load_20s_dataset(load_2nn_dist=True, dist_thres=5, augment_rate=0.5)
+    _, _, _, _, X_o, y_o, _ = load_20s_dataset(load_2nn_dist=True, augment_rate=None, dist_thres=5)
 
     C_range = np.logspace(-3, 3, 7)
     gamma_range = np.logspace(-3, 3, 7)
@@ -38,7 +39,7 @@ def main():
     param_grid = dict(gamma=gamma_range, C=C_range, class_weight=class_weights_cand)
 
     best_params, best_score, best_model = grid_search_with_resampling(
-        X_train, y_train, X_test, y_test,
+        X, y, X_o, y_o,
         model=SVC(kernel='rbf'),
         param_grid=param_grid,
         minority_class=0,
@@ -54,9 +55,9 @@ def main():
     print(classification_report(y, y_pred))
     
     # Save the trained model and scaler
-    model_save_path = 'svm_clf_20s_v3.joblib'
-    joblib.dump(best_model, model_save_path)
-    print(f"Model saved to {model_save_path}")
+    # model_save_path = 'svm_clf_20s_v3.joblib'
+    # joblib.dump(best_model, model_save_path)
+    # print(f"Model saved to {model_save_path}")
 
 if __name__ == "__main__":
     main()

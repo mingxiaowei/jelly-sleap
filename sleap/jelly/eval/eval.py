@@ -265,7 +265,7 @@ def calculate_polygon_angles(points):
         return np.array([calculate_polygon_angles_single_frame(points[i]) for i in range(points.shape[0])])
 
 def calculate_polygon_angles_single_frame(points):
-    non_missing_mask = points.sum(axis=1) > 0
+    non_missing_mask = (points.sum(axis=1) > 0) | ~(np.isnan(points).any(axis=1))
     non_missing_indices = np.where(non_missing_mask)[0]
     angles = np.zeros(len(points))
     
@@ -296,7 +296,7 @@ def get_missing_count(pts):
     missing_cnt = np.zeros((frame_cnt, pt_cnt))
     for frame_idx in range(frame_cnt):
         for pt_idx in range(pt_cnt):
-            if pts[frame_idx, pt_idx, :].sum() == 0:
+            if pts[frame_idx, pt_idx, :].sum() == 0 or np.isnan(pts[frame_idx, pt_idx, :]).any():
                 missing_cnt[frame_idx, pt_idx] = 1
     return missing_cnt
 
