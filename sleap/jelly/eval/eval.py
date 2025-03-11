@@ -265,43 +265,15 @@ def calculate_polygon_angles(points):
         return np.array([calculate_polygon_angles_single_frame(points[i]) for i in range(points.shape[0])])
 
 def calculate_polygon_angles_single_frame(points):
-    N = len(points)
-    angles = np.zeros(N)
-
-    for i in range(N):
-        p1 = points[i - 1]  
-        p2 = points[i]      
-        p3 = points[(i + 1) % N]  
-        
-        v1 = p1 - p2
-        v2 = p3 - p2
-        v1 /= np.linalg.norm(v1) + K.epsilon()
-        v2 /= np.linalg.norm(v2) + K.epsilon()
-
-        dot_product = np.dot(v1, v2)
-        angle_rad = np.arccos(np.clip(dot_product, -1.0, 1.0))  # Clip for numerical stability
-        angle_deg = np.degrees(angle_rad)
-        if np.cross(v1, v2) > 0:
-            angle_deg = 360 - angle_deg
-
-        angles[i] = angle_deg
-
-    return angles
-
-def calculate_polygon_angles(points):
-    if points.ndim == 2:
-        return calculate_polygon_angles_single_frame(points)
-    else:
-        return np.array([calculate_polygon_angles_single_frame(points[i]) for i in range(points.shape[0])])
-
-def calculate_polygon_angles_single_frame(points):
-    N = len(points)
-    angles = np.zeros(N)
-
-    for i in range(N):
-        p1 = points[i - 1]  
-        p2 = points[i]      
-        p3 = points[(i + 1) % N]  
+    non_missing_mask = points.sum(axis=1) > 0
+    non_missing_indices = np.where(non_missing_mask)[0]
+    angles = np.zeros(len(points))
+    
+    non_missing_cnt = len(non_missing_indices)
+    for i in range(non_missing_cnt):
+        p1 = points[non_missing_indices[i - 1]]  
+        p2 = points[non_missing_indices[i]]      
+        p3 = points[non_missing_indices[(i + 1) % non_missing_cnt]]  
         
         v1 = p1 - p2
         v2 = p3 - p2
@@ -314,7 +286,7 @@ def calculate_polygon_angles_single_frame(points):
         if np.cross(v1, v2) > 0:
             angle_deg = 360 - angle_deg
 
-        angles[i] = angle_deg
+        angles[non_missing_indices[i]] = angle_deg
 
     return angles
 
@@ -351,8 +323,6 @@ def animate_classification_results(
         
     assert pred_pts.shape == gt_pts.shape, f'points shape mismatch: {pred_pts.shape} != {gt_pts.shape}'
     
-    # if checked_labels.shape[0] == pred_pts.shape[0]:
-    #     checked_labels = checked_labels[bg_video_start_idx:]
     checked_labels = checked_labels[bg_video_start_idx:]
     pred_pts = pred_pts[bg_video_start_idx:]
     gt_pts = gt_pts[bg_video_start_idx:]
@@ -371,7 +341,7 @@ def animate_classification_results(
     bg_imgs = []
     texts = []  # Add list to store text annotations
     
-    vid_max_val = vid.max()
+    vid_max_val = 255 if isinstance(bg_video, sleap.Video) else 1
     
     for ax in axes:
         ax.set_xlim(0, x)

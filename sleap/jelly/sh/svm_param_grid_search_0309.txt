@@ -1,0 +1,374 @@
+Labels(labeled_frames=3000, videos=1, skeletons=1, tracks=0)
+Labels(labeled_frames=3000, videos=1, skeletons=1, tracks=0)
+all_untracked_points shape: (3000, 17, 3)
+Missing point count: 0
+reorder_idx.shape: (17,)
+all_untracked_points shape: (3000, 17, 2)
+Missing point count: 0
+reorder_idx.shape: (17,)
+total point count = 50983, correct = 49555, incorrect = 1428
+(50038, 4) (50038,)
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Mean score: 0.870
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Mean score: 0.896
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Mean score: 0.903
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Mean score: 0.917
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Mean score: 0.019
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.01}
+Mean score: 0.555
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.1}
+Mean score: 0.751
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 2, 1: 1}, 'gamma': 1.0}
+Mean score: 0.768
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 2, 1: 1}, 'gamma': 10.0}
+Mean score: 0.186
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.01, 'class_weight': {0: 2, 1: 1}, 'gamma': 100.0}
+Mean score: 0.000
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Mean score: 0.890
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Mean score: 0.911
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Mean score: 0.868
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Mean score: 0.559
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Mean score: 0.029
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.01}
+Mean score: 0.743
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.1}
+Mean score: 0.762
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 2, 1: 1}, 'gamma': 1.0}
+Mean score: 0.758
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 2, 1: 1}, 'gamma': 10.0}
+Mean score: 0.538
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 0.1, 'class_weight': {0: 2, 1: 1}, 'gamma': 100.0}
+Mean score: 0.027
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Mean score: 0.907
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Mean score: 0.909
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Mean score: 0.799
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Mean score: 0.360
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Mean score: 0.029
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.01}
+Mean score: 0.741
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.1}
+Mean score: 0.762
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 1.0}
+Mean score: 0.720
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 10.0}
+Mean score: 0.352
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 1.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 100.0}
+Mean score: 0.029
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Mean score: 0.917
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Mean score: 0.890
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Mean score: 0.700
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Mean score: 0.257
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Mean score: 0.029
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.01}
+Mean score: 0.727
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.1}
+Mean score: 0.760
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 1.0}
+Mean score: 0.660
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 10.0}
+Mean score: 0.259
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 10.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 100.0}
+Mean score: 0.029
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Mean score: 0.923
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.1}
+Mean score: 0.872
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 1.0}
+Mean score: 0.586
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 10.0}
+Mean score: 0.236
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 100.0}
+Mean score: 0.029
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.01}
+Mean score: 0.725
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 0.1}
+Mean score: 0.751
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 1.0}
+Mean score: 0.555
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 10.0}
+Mean score: 0.230
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+majority count: 31715, minority count: 6343
+Params: {'C': 100.0, 'class_weight': {0: 2, 1: 1}, 'gamma': 100.0}
+Mean score: 0.029
+
+Best parameters: {'C': 100.0, 'class_weight': {0: 5, 1: 1}, 'gamma': 0.01}
+Best score: 0.923
+Accuracy: 0.8567146282973621
+              precision    recall  f1-score   support
+
+         0.0       0.06      0.88      0.11        49
+         1.0       1.00      0.86      0.92      4955
+
+    accuracy                           0.86      5004
+   macro avg       0.53      0.87      0.51      5004
+weighted avg       0.99      0.86      0.91      5004
+
+Model saved to svm_clf_20s_v1.joblib

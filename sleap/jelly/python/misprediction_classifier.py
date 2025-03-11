@@ -2,7 +2,7 @@ import numpy as np
 import sleap
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold, ParameterGrid
-from sklearn.metrics import make_scorer, recall_score
+from sklearn.metrics import make_scorer, recall_score, classification_report
 from sklearn.base import clone
 
 # from .animation import get_each_edge_length
@@ -13,16 +13,18 @@ from animation import get_all_untracked_points_from_lbfs, get_each_edge_length, 
 
 def get_2nn_dist_multi_frame(pts):
     frame_cnt, pt_cnt = pts.shape[:2]
-    pts_2nn_dist = np.zeros((frame_cnt, pt_cnt))
+    pts_2nn_dist = np.full((frame_cnt, pt_cnt), -1, dtype=np.float32) # -1 means missing
     for i in range(frame_cnt):
-        edge_lengths = get_each_edge_length(pts[i]) # (pt_cnt,)
+        non_missing_mask = pts[i].sum(axis=1) > 0
+        non_missing_pts = pts[i][non_missing_mask]
+        edge_lengths = get_each_edge_length(non_missing_pts) # (pt_cnt,)
         shifted_edge_lengths = np.roll(edge_lengths, 1)
-        pts_2nn_dist[i] = (edge_lengths + shifted_edge_lengths) / np.mean(edge_lengths) # normalize by avg edge length in the current frame
+        pts_2nn_dist[i][non_missing_mask] = (edge_lengths + shifted_edge_lengths) / np.mean(edge_lengths) # normalize by avg edge length in the current frame
     return pts_2nn_dist
 
 def get_nn_dist_prev_frame(pts, max_dist=80):
     frame_cnt, pt_cnt = pts.shape[:2]
-    pts_prev_nn_dist = np.full((frame_cnt - 1, pt_cnt), max_dist) # if a point does not have a nn in the previous frame, its distance is set to inf
+    pts_prev_nn_dist = np.full((frame_cnt - 1, pt_cnt), max_dist, dtype=np.float32) # if a point does not have a nn in the previous frame, its distance is set to inf
     for frame_idx in range(1, frame_cnt):
         curr_pts = pts[frame_idx]
         prev_pts = pts[frame_idx - 1]
@@ -179,7 +181,7 @@ def load_20s_dataset(dist_thres=3):
     
     return X_train, X_test, y_train, y_test, X_scaled, y, scaler
 
-def custom_resample(X, y, minority_class=0, minor_to_major_ratio=0.5, dowmsample_majority_ratio=1):
+def custom_resample(X, y, minority_class=0, minor_to_major_ratio=0.5, dowmsample_majority_ratio=1, verbose=False):
     """
     Resample dataset by undersampling majority class and oversampling minority class
     
@@ -219,7 +221,8 @@ def custom_resample(X, y, minority_class=0, minor_to_major_ratio=0.5, dowmsample
         X_minority_resampled = X_minority
         y_minority_resampled = y_minority
     
-    print(f'majority count: {len(X_majority_resampled)}, minority count: {len(X_minority_resampled)}')
+    if verbose:
+        print(f'majority count: {len(X_majority_resampled)}, minority count: {len(X_minority_resampled)}')
     
     # Combine the datasets
     X_resampled = np.vstack([X_majority_resampled, X_minority_resampled])
@@ -231,7 +234,7 @@ def custom_resample(X, y, minority_class=0, minor_to_major_ratio=0.5, dowmsample
     
     return X_resampled[indices], y_resampled[indices]
 
-def grid_search_with_resampling(X, y, model, param_grid, 
+def grid_search_with_resampling_cv(X, y, model, param_grid, 
                                 n_splits=5, 
                                 minority_class=0, 
                                 minor_to_major_ratio=0.2,
@@ -287,5 +290,54 @@ def grid_search_with_resampling(X, y, model, param_grid,
             
         print(f"Params: {params}")
         print(f"Mean score: {mean_score:.3f}")
+        
+        y_pred = model_fold.predict(X_val_fold)
+        print(classification_report(y_val_fold, y_pred))
+    
+    return best_params, best_score, best_model
+
+def grid_search_with_resampling(X_train, y_train, X_test, y_test, model, param_grid, 
+                                minority_class=0, 
+                                minor_to_major_ratio=0.2,
+                                dowmsample_majority_ratio=0.8):
+    """
+    Perform grid search with resampling in each fold
+    """
+    best_score = 0
+    best_params = None
+    best_model = None
+    
+    X_train_resampled, y_train_resampled = custom_resample(
+        X_train, y_train,
+        minority_class=minority_class, 
+        minor_to_major_ratio=minor_to_major_ratio,
+        dowmsample_majority_ratio=dowmsample_majority_ratio
+    )
+    
+    # Create scorer that focuses on minority class recall
+    scorer = make_scorer(recall_score, pos_label=minority_class)
+    
+    # For each parameter combination
+    for params in ParameterGrid(param_grid):
+        
+        # Train model with current parameters
+        model_fold = clone(model)
+        model_fold.set_params(**params)
+        model_fold.fit(X_train_resampled, y_train_resampled)
+        
+        # Score on validation set
+        score = scorer(model_fold, X_test, y_test)
+        
+        # Update best if improved
+        if score > best_score:
+            best_score = score
+            best_params = params
+            best_model = model_fold
+            
+        print(f"Params: {params}")
+        print(f"Score: {score:.3f}")
+        
+        y_pred = model_fold.predict(X_test)
+        print(classification_report(y_test, y_pred))
     
     return best_params, best_score, best_model
