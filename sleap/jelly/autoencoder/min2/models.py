@@ -7,12 +7,14 @@ from tensorflow.keras.layers import Input, ConvLSTM2D, LSTM, \
         MultiHeadAttention, LayerNormalization, Add, Conv2D, Conv1D, Multiply, Conv3D, Embedding
 from tensorflow.keras.optimizers import Adam
 
-def masked_mse_loss(y_true, y_pred, pt_cnt=17):
+def masked_mse_loss(y_true, y_pred, pt_cnt=17, normalizer=(170, 174)):
     """
     Compute mean squared error (MSE) only for valid points.
     A point is considered missing if its ground truth is (0, 0).
     """
     # Create a mask: valid points get 1; missing points (0,0) get 0.
+    # y_true = tf.reshape(y_true, (-1, pt_cnt, 2)) / normalizer
+    # y_pred = tf.reshape(y_pred, (-1, pt_cnt, 2)) / normalizer
     y_true = tf.reshape(y_true, (-1, pt_cnt, 2))
     y_pred = tf.reshape(y_pred, (-1, pt_cnt, 2))
     is_missing = tf.logical_and(tf.equal(y_true[..., 0], 0.0),
@@ -388,9 +390,11 @@ def get_model_11(window_size=5, pt_cnt=17, latent_dim=32, num_layers=4):
     inputs = Input(shape=(window_size, pt_cnt * 2))
     layer_dim = latent_dim * (2 ** num_layers)
     
+    x = inputs
+    
     # encoder
     for _ in range(num_layers):
-        x = Dense(layer_dim, activation='relu')(inputs)
+        x = Dense(layer_dim, activation='relu')(x)
         layer_dim //= 2
     x = Dense(latent_dim, activation='relu')(x)
     

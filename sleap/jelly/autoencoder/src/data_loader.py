@@ -155,6 +155,7 @@ def load_data(
     swap_rate=0.005, 
     split_size=0.9,
     roll=False,
+    canvas_size=(170, 174),
     ):
     coords_raw, coords_corrected = load_points(raw_points_path=raw_points_path, 
                                                corrected_points_path=corrected_points_path)
@@ -166,29 +167,31 @@ def load_data(
         coords_augmented = coords_corrected.copy()
         
     coords_corrected_original = coords_corrected.copy()
-    coords_corrected_original = mean_interpolate(coords_corrected_original, coords_corrected_original) / np.array([170, 174])
-    coords_augmented = mean_interpolate(coords_augmented, coords_augmented)
-    coords_corrected = mean_interpolate(coords_corrected, coords_corrected)
+    coords_corrected_original = mean_interpolate(coords_corrected_original, coords_corrected_original) / canvas_size
+    coords_augmented = mean_interpolate(coords_augmented, coords_augmented) 
+    coords_corrected = mean_interpolate(coords_corrected, coords_corrected) 
     # 2. get window
-    coords_corrected_windows, coords_augmented_windows, coords_corrected_original_windows = get_windows_wrapper(
-                                                            [coords_corrected, coords_augmented, coords_corrected_original], 
+    coords_corrected_windows, coords_augmented_windows = get_windows_wrapper(
+                                                            [coords_corrected, coords_augmented], 
                                                             window_size=window_size, 
                                                             flatten=flatten, 
-                                                            roll=[False, roll, False], 
-                                                            pt_cnt=pt_cnt)
+                                                            roll=[False, roll], 
+                                                            pt_cnt=pt_cnt, 
+                                                            normalizer=canvas_size)
     
     print(f'coords_corrected_windows.shape: {coords_corrected_windows.shape}')
     print(f'coords_augmented_windows.shape: {coords_augmented_windows.shape}')
     
     # TODO: get windows first then swap
-    X = coords_corrected_windows
+    X = coords_corrected_windows.copy()
     # 3. shuffle
     indices = np.arange(len(coords_corrected_windows))
     if shuffle:
         np.random.shuffle(indices)
     coords_corrected_windows = coords_corrected_windows[indices]
     coords_augmented_windows = coords_augmented_windows[indices]
-    coords_corrected_original_windows = coords_corrected_original_windows[indices]
+    # coords_corrected_original_windows = coords_corrected_original_windows[indices]
+    coords_corrected_original = coords_corrected_original[indices]
     
     print(f'X min = {coords_augmented_windows.min():.2f}, X max = {coords_augmented_windows.max():.2f}')
     print(f'y min = {coords_corrected_original.min():.2f}, y max = {coords_corrected_original.max():.2f}')
