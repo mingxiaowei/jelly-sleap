@@ -1,4 +1,10 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/python')
+from polygon_based_correction import poly_4
+
 
 def cart2pol(xy_arr, center_pos=(0, 0)):
     xy_arr = xy_arr - center_pos
@@ -107,4 +113,118 @@ def test_single_frame_polar_interpolation(gt_pts, frame_idx):
     mean_err = np.linalg.norm(interp_pts - curr_frame_pts, axis=1).mean()
     print(f'mean error (pixel): {mean_err:.2f}')
 
+def eval_avg_flow_interpolation(pts, window_size=2, reorder=True, verbose=False):
+    """
+    Evaluate the interpolation performance of a given interpolator.
     
+    Args:
+        pts: The points to interpolate.
+        gt_pts: The ground truth points.
+        
+    Returns:
+        The interpolation error. (frame_cnt, pt_cnt)
+    """
+    pts = pts[:, :, :2]
+    frame_cnt, pt_cnt = pts.shape[:2]
+    interpolation_err = np.zeros((frame_cnt, pt_cnt))
+    
+    for frame_idx in range(frame_cnt):
+        if verbose: 
+            print(f'frame_idx: {frame_idx}')
+        curr_frame_pts = pts[frame_idx]
+        gt_pts_copy = pts.copy()
+        if reorder:
+            polygon_order = poly_4(curr_frame_pts)
+            curr_frame_pts = curr_frame_pts[polygon_order]
+            gt_pts_copy = gt_pts_copy[:, polygon_order]
+        center_pos = curr_frame_pts.mean(axis=0)
+        
+        for pt_idx in range(pt_cnt):
+            
+            curr_pt = gt_pts_copy[frame_idx, pt_idx].copy()
+            gt_pts_copy[frame_idx, pt_idx] = (0, 0)
+            curr_pt_interpolated = avg_flow_interpolate(gt_pts_copy, frame_idx, window_size=window_size, center_pos=center_pos, verbose=False)[pt_idx]
+            assert curr_pt.shape == curr_pt_interpolated.shape, f'shape mismatch: {curr_pt.shape} != {curr_pt_interpolated.shape}'
+            interpolation_err[frame_idx, pt_idx] = np.linalg.norm(curr_pt - curr_pt_interpolated)
+            gt_pts_copy[frame_idx, pt_idx] = curr_pt
+            if verbose:
+                print(f'curr_pt: {np.round(curr_pt, 2)}, curr_pt_interpolated: {np.round(curr_pt_interpolated, 2)}, err: {np.round(interpolation_err[frame_idx, pt_idx], 2)}')
+            
+    return interpolation_err
+
+def avg_flow_interpolate(all_frame_pts, frame_idx=None, window_size=2, center_pos=None, verbose=True):
+    """
+    Interpolate the points in all_frame_pts using the average displacement method.
+
+    Args:
+        all_frame_pts (np.ndarray): The points to interpolate. Shape: (frame_cnt, pt_cnt, 2).
+        frame_idx (int): The index of the frame to interpolate.
+        window_size (int, optional): The size of the window to use for interpolation (inlusive on both ends). Defaults to 2.
+        center_pos (tuple, optional): The center position of the points. Defaults to None.
+
+    Returns:
+        np.ndarray: The interpolated points at frame_idx. Shape: (pt_cnt, 2).
+    """
+    if frame_idx is not None:
+        return avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=window_size, center_pos=center_pos, verbose=verbose)
+    else:
+        frame_cnt = all_frame_pts.shape[0]
+        interpolated_pts = np.zeros_like(all_frame_pts)
+        for frame_idx in range(frame_cnt):
+            interpolated_pts[frame_idx] = avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=window_size, center_pos=center_pos, verbose=verbose)
+        return interpolated_pts
+    
+def avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=2, center_pos=None, verbose=True):
+    if center_pos is None:
+        center_pos = all_frame_pts.mean(axis=0)
+    if frame_idx < window_size:
+        return polar_interpolate(all_frame_pts[frame_idx], center_pos=center_pos, verbose=verbose)
+    
+    pt_cnt = all_frame_pts.shape[1]
+    curr_frame_pts = all_frame_pts[frame_idx]
+    prev_frame_pts = all_frame_pts[frame_idx - 1]
+    avg_flow_vecs = (all_frame_pts[frame_idx - 1] - all_frame_pts[frame_idx - window_size]) / (window_size - 1)
+    # print(f'avg_flow_vecs: {np.round(avg_flow_vecs, 2)}')
+    non_missing_mask = ~(curr_frame_pts == 0).all(axis=1)
+    first_non_missing_idx = np.where(non_missing_mask)[0][0]
+    curr_frame_pts = np.roll(curr_frame_pts, -first_non_missing_idx, axis=0)
+    prev_frame_pts = np.roll(prev_frame_pts, -first_non_missing_idx, axis=0)
+    non_missing_mask = np.roll(non_missing_mask, -first_non_missing_idx, axis=0)
+    avg_flow_vecs = np.roll(avg_flow_vecs, -first_non_missing_idx, axis=0)
+    non_missing_indices = np.where(non_missing_mask)[0]
+    
+    for pt_idx in range(pt_cnt):
+        if non_missing_mask[pt_idx]:
+            continue
+        prev_idx = non_missing_indices[non_missing_indices < pt_idx][-1] if any(non_missing_indices < pt_idx) else non_missing_indices[-1]
+        next_idx = non_missing_indices[non_missing_indices > pt_idx][0] if any(non_missing_indices > pt_idx) else non_missing_indices[0]
+        
+        if next_idx > prev_idx:
+            denom = next_idx - prev_idx
+        else:
+            denom = pt_cnt - (prev_idx - next_idx)
+        weight = ((pt_idx - prev_idx) % pt_cnt) / denom
+        # print(f'prev flow vec: {np.round(avg_flow_vecs[prev_idx], 2)}, next flow vec: {np.round(avg_flow_vecs[next_idx], 2)}, weight: {weight}')
+        avg_flow = avg_flow_vecs[prev_idx] * weight + avg_flow_vecs[next_idx] * (1 - weight)
+        curr_frame_pts[pt_idx] = prev_frame_pts[pt_idx] + avg_flow
+    
+    curr_frame_pts = np.roll(curr_frame_pts, first_non_missing_idx, axis=0)
+    return curr_frame_pts
+
+def test_single_frame_avg_flow_interpolation(gt_pts, frame_idx, window_size=2, reorder=True):
+    gt_pts_copy = gt_pts.copy()
+    curr_frame_pts = gt_pts[frame_idx]
+    if reorder:
+        poly_order = poly_4(curr_frame_pts)
+        curr_frame_pts = curr_frame_pts[poly_order]
+        gt_pts_copy = gt_pts_copy[:, poly_order]
+    interp_pts = np.zeros_like(curr_frame_pts)
+    
+    for pt_idx in range(curr_frame_pts.shape[0]):
+        curr_pt = gt_pts_copy[frame_idx, pt_idx].copy()
+        gt_pts_copy[frame_idx, pt_idx] = (0, 0)
+        interp_pts[pt_idx] = avg_flow_interpolate(gt_pts_copy, frame_idx, window_size=window_size, verbose=False)[pt_idx]
+        gt_pts_copy[frame_idx, pt_idx] = curr_pt
+    plot_pred_vs_gt_pts(interp_pts, curr_frame_pts)
+    mean_err = np.linalg.norm(interp_pts - curr_frame_pts, axis=1).mean()
+    print(f'mean error (pixel): {mean_err:.2f}')
