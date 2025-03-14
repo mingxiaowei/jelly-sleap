@@ -156,20 +156,21 @@ def load_dataset(dist_thres=3):
     
     return X_train, X_test, y_train, y_test, X_scaled, y, scaler
 
-def augment_pred_pts(pred_pts, augment_rate=0.5):
+def augment_pred_pts(pred_pts, augment_rate=0.5, augment_pt_range=(1, 4), noise_mean=20, noise_std=10):
     pred_pts_augmented = pred_pts[:, :, :2].copy()
     missing_cnt = get_missing_count(pred_pts_augmented)
     selected_frames = np.random.choice(pred_pts_augmented.shape[0], int(pred_pts_augmented.shape[0] * augment_rate), replace=False)
 
     for frame_idx in selected_frames:
         aug_candidates = np.where(missing_cnt[frame_idx] == 0)[0]
-        aug_pt_indices = np.random.choice(aug_candidates, np.random.randint(1, 4), replace=False)
+        aug_pt_indices = np.random.choice(aug_candidates, np.random.randint(*augment_pt_range), replace=False)
         for pt_idx in aug_pt_indices:
-            pred_pts_augmented[frame_idx, pt_idx] += np.random.normal(10, 3, size=2)
+            pred_pts_augmented[frame_idx, pt_idx] += np.random.normal(noise_mean, noise_std, size=2)
     
     return pred_pts_augmented
 
-def load_20s_dataset(dist_thres=3, load_2nn_dist=True, augment_rate=None):
+def load_20s_dataset(dist_thres=3, load_2nn_dist=True, scaler=None, 
+                     augment_rate=None, augment_pt_range=(1, 4), noise_mean=20, noise_std=10):
     predicted_dataset_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_with_scores.slp'
     predicted_dataset = sleap.load_file(predicted_dataset_path)
     print(predicted_dataset)
@@ -183,7 +184,11 @@ def load_20s_dataset(dist_thres=3, load_2nn_dist=True, augment_rate=None):
     gt_pts = get_all_untracked_points(corrected_dataset, interpolate=False, use_labeled_only=True)
     
     if augment_rate is not None:
-        pred_pts_with_scores[2:, :, :2] = augment_pred_pts(pred_pts_with_scores[2:, :, :2], augment_rate)
+        pred_pts_with_scores[2:, :, :2] = augment_pred_pts(pred_pts_with_scores[2:, :, :2], 
+                                                           augment_rate=augment_rate, 
+                                                           augment_pt_range=augment_pt_range, 
+                                                           noise_mean=noise_mean, 
+                                                           noise_std=noise_std)
     
     cont_features, cont_labels = get_classification_dataset(pred_pts_with_scores, gt_pts, dist_thres=dist_thres, load_2nn_dist=load_2nn_dist)
     
@@ -193,8 +198,11 @@ def load_20s_dataset(dist_thres=3, load_2nn_dist=True, augment_rate=None):
     print(X.shape, y.shape)
 
     # Normalize features
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    if scaler is None:
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+    else:
+        X_scaled = scaler.transform(X)
 
     # Split into train/test sets
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.1)
@@ -318,6 +326,7 @@ def grid_search_with_resampling_cv(X, y, model, param_grid,
 
 def grid_search_with_resampling(X_train, y_train, X_test, y_test, model, param_grid, 
                                 minority_class=0, 
+                                resample=True,
                                 minor_to_major_ratio=0.2,
                                 dowmsample_majority_ratio=0.8):
     """
@@ -327,12 +336,15 @@ def grid_search_with_resampling(X_train, y_train, X_test, y_test, model, param_g
     best_params = None
     best_model = None
     
-    X_train_resampled, y_train_resampled = custom_resample(
-        X_train, y_train,
-        minority_class=minority_class, 
-        minor_to_major_ratio=minor_to_major_ratio,
-        dowmsample_majority_ratio=dowmsample_majority_ratio
-    )
+    if resample:
+        X_train_resampled, y_train_resampled = custom_resample(
+            X_train, y_train,
+            minority_class=minority_class, 
+            minor_to_major_ratio=minor_to_major_ratio,
+            dowmsample_majority_ratio=dowmsample_majority_ratio
+        )
+    else:
+        X_train_resampled, y_train_resampled = X_train, y_train
     
     # Create scorer that focuses on minority class recall
     scorer = make_scorer(recall_score, pos_label=minority_class)
@@ -361,3 +373,19 @@ def grid_search_with_resampling(X_train, y_train, X_test, y_test, model, param_g
         print(classification_report(y_test, y_pred))
     
     return best_params, best_score, best_model
+
+def unravel_labels(y, x_pred):
+    if x_pred.ndim == 3:
+        x_pred = x_pred[:, :, :2]
+    missing_mask = get_missing_count(x_pred).astype(int)
+    print(missing_mask.sum())
+    frame_cnt, pt_cnt = x_pred.shape[:2]
+    checked_labels_unraveled = np.full((frame_cnt,  pt_cnt), -1, dtype=int)
+    label_idx = 0
+    for frame_idx in range(frame_cnt):
+        for pt_idx in range(pt_cnt):
+            if not missing_mask[frame_idx, pt_idx]:
+                checked_labels_unraveled[frame_idx, pt_idx] = y[label_idx]
+                label_idx += 1
+            
+    return checked_labels_unraveled

@@ -25,17 +25,18 @@ class Logger:
 # ... existing code ...
 
 # Set up logging at the start of your analysis
-log_file = 'svm_param_grid_search_0310_4.txt'
+log_file = 'svm_param_grid_search_0312_0.txt'
 sys.stdout = Logger(log_file)
 
 def main():
 
-    X_train, X_test, y_train, y_test, X, y, scaler = load_20s_dataset(load_2nn_dist=True, dist_thres=5, augment_rate=0.5)
-    _, _, _, _, X_o, y_o, _ = load_20s_dataset(load_2nn_dist=True, augment_rate=None, dist_thres=5)
+    _, _, _, _, X_o, y_o, scaler_o = load_20s_dataset(load_2nn_dist=True, augment_rate=None, dist_thres=5)
+    _, _, _, _, X, y, _ = load_20s_dataset(load_2nn_dist=True, dist_thres=5, augment_rate=0.9, 
+                                            scaler=scaler_o, augment_pt_range=(1, 5), noise_mean=20, noise_std=10)
 
-    C_range = np.logspace(-3, 3, 7)
-    gamma_range = np.logspace(-3, 3, 7)
-    class_weights_cand = [{0: 5, 1: 1}, {0: 10, 1: 1}]
+    C_range = np.logspace(-4, 2, 7)
+    gamma_range = np.logspace(-4, 2, 7)
+    class_weights_cand = [{0: 5, 1: 1}, {0: 10, 1: 1}, {0: 20, 1: 1}]
     param_grid = dict(gamma=gamma_range, C=C_range, class_weight=class_weights_cand)
 
     best_params, best_score, best_model = grid_search_with_resampling(
@@ -44,7 +45,8 @@ def main():
         param_grid=param_grid,
         minority_class=0,
         minor_to_major_ratio=0.2,
-        dowmsample_majority_ratio=0.8
+        dowmsample_majority_ratio=0.8, 
+        resample=False,
     )
 
     print(f"\nBest parameters: {best_params}")
