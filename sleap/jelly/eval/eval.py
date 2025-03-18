@@ -293,7 +293,7 @@ def calculate_polygon_angles_single_frame(points):
 def get_missing_count(pts):
     frame_cnt, pt_cnt = pts.shape[:2]
     pts = pts[:, :, :2]
-    missing_cnt = np.zeros((frame_cnt, pt_cnt))
+    missing_cnt = np.zeros((frame_cnt, pt_cnt), dtype=int)
     for frame_idx in range(frame_cnt):
         for pt_idx in range(pt_cnt):
             if pts[frame_idx, pt_idx, :].sum() == 0 or np.isnan(pts[frame_idx, pt_idx, :]).any():
@@ -428,3 +428,42 @@ def animate_classification_results(
         
     plt.tight_layout()
     return anim
+
+def get_gt_pts(corrected_dataset_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_no_scores_corrected.slp'):
+    corrected_dataset = sleap.load_file(corrected_dataset_path)
+    return get_all_untracked_points(corrected_dataset, interpolate=False, use_labeled_only=True)
+
+def plot_nn_err(pred_pts, id_missing_mask=None, gt_pts=None, use_non_overlap_nn=False):
+    # if id_missing_mask is None, calculate error for all points
+    if gt_pts is None:
+        gt_pts = get_gt_pts()
+    frame_cnt, pt_cnt = pred_pts.shape[:2]
+    all_err = []
+    for frame_idx in range(frame_cnt):
+        curr_pts = gt_pts[frame_idx]
+        if use_non_overlap_nn:
+            curr_pts = curr_pts.copy()
+            
+        for pt_idx in range(pt_cnt):
+            if id_missing_mask is None or id_missing_mask[frame_idx, pt_idx] == 1:  
+                all_dists = np.linalg.norm(pred_pts[frame_idx, pt_idx] - curr_pts, axis=1)
+                min_dist_idx = np.argmin(all_dists)
+                all_err.append(all_dists[min_dist_idx])
+                if use_non_overlap_nn:
+                    curr_pts = np.delete(curr_pts, min_dist_idx, axis=0)
+                    
+    all_err = np.array(all_err)
+    plt.hist(all_err.flatten(), bins=100)
+    plt.show()
+    print(f'mean: {np.mean(all_err)}, std: {np.std(all_err)}, max: {np.max(all_err)}')
+
+def plot_poly_err(pred_pts, id_missing_mask=None, gt_pts=None):
+    if gt_pts is None:
+        gt_pts = get_gt_pts()
+    all_interp_err = pred_pts - gt_pts
+    if id_missing_mask is not None:
+        all_interp_err = all_interp_err[id_missing_mask > 0]
+    all_interp_err = np.linalg.norm(all_interp_err, axis=1)
+    plt.hist(all_interp_err.flatten(), bins=100)
+    plt.show()
+    print(f'mean: {np.mean(all_interp_err)}, std: {np.std(all_interp_err)}, max: {np.max(all_interp_err)}')

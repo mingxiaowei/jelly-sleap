@@ -108,11 +108,15 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
     Get all untracked points from a list of labeled frames.
     """
     frame_cnt = len(lbfs)
-    # instance_cnt = len(lbfs[0].instances)
+
+    if tb_cnt is None: # use the max number of instances in the all frames
+        inst_cnts = [len(lf.instances) for lf in lbfs]
+        tb_cnt = max(inst_cnts)
+        print(f'tb_cnt: {tb_cnt}')
+        
     instance_cnt = tb_cnt
     all_untracked_points = np.zeros((frame_cnt, instance_cnt, 2 + int(load_pred_score)))
     print(f'all_untracked_points shape: {all_untracked_points.shape}')
-    missing_point_cnt = 0
 
     # populate all_tracked_coords with known coordinates
     if use_labeled_only:
@@ -125,14 +129,11 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
         if len(pred_insts) > tb_cnt:
             if use_labeled_only:
                 raise ValueError(f'frame {frame_idx} has {len(pred_insts)} predicted instances')
-                # print(f'frame {frame_idx} has {len(pred_insts)} predicted instances')
             pred_inst_scores = [instance.score for instance in pred_insts]
             sorted_args = np.argsort(pred_inst_scores)[::-1][:tb_cnt]
             pred_insts = [inst for i, inst in enumerate(pred_insts) if i in sorted_args]
         for inst_idx, instance in enumerate(pred_insts):
             pt_coord = instance.points_array[0]
-            if pt_coord.sum() == 0:
-                missing_point_cnt += 1
             all_untracked_points[frame_idx - start_idx, inst_idx, :2] = pt_coord
             if load_pred_score:
                 all_untracked_points[frame_idx - start_idx, inst_idx, 2] = instance.score
@@ -152,6 +153,7 @@ def get_all_untracked_points_from_lbfs(lbfs: List[sleap.instance.LabeledFrame],
             if first_non_missing_frame_idx is None and curr_frame_missing_point_cnt == 0:
                 first_non_missing_frame_idx = frame_idx
                 print(f"First non missing frame idx: {first_non_missing_frame_idx}")
+    missing_point_cnt = np.sum(all_untracked_points[:, :, :2].sum(axis=2) == 0)
     print(f"Missing point count: {missing_point_cnt}")
     
     if reorder: 
