@@ -15,8 +15,8 @@ export NUMEXPR_NUM_THREADS=$n_threads
 export VECLIB_MAXIMUM_THREADS=$n_threads
 
 
-PREDICTION_PATH="/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/multifish_animal_1_v10.slp.250221_051111.predictions.slp"
-OUTPUT_PATH="/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/simplemax-tracking/multifish_animal_1_v10_simplemax_tracking.slp"
+PREDICTION_PATH='/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_corrected_with_scores.slp'
+OUTPUT_PATH="/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_corrected_with_scores_simplemax.slp"
 
 # micromamba deactivate
 # micromamba activate sleap
@@ -24,16 +24,15 @@ OUTPUT_PATH="/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/simple
 sleap-track $PREDICTION_PATH \
     -o $OUTPUT_PATH \
     --video.index 0 \
-    --video.input_format channels_last \
-    --batch_size 80 \
+    --batch_size 400 \
     --tracking.max_tracking 1 \
     --tracking.tracker simplemaxtracks \
     --tracking.max_tracks 17 \
     --tracking.similarity centroid \
     --tracking.match hungarian \
-    --tracking.track_window 10 \
+    --tracking.track_window 5 \
     --tracking.robust 0.95 \
-    --tracking.oks_score_weighting 1 \
+    --tracking.oks_score_weighting 0 \
     --tracking.post_connect_single_breaks 1 \
     --verbosity rich \
     --no-empty-frames
