@@ -21,7 +21,21 @@ def pol2cart(rho_phi_arr, center_pos=(0, 0)):
     y = rho * np.sin(phi)
     return np.array([x, y]).T + center_pos
 
-def polar_interpolate(curr_frame_pts, frame_idx=None, non_missing_mask=None, center_pos=None, verbose=True):
+def polar_interpolate(pts, frame_idx=None, non_missing_mask=None, center_pos=None, verbose=True):
+    if pts.ndim == 2:
+        return polar_interpolate_single_frame(pts, frame_idx, non_missing_mask, center_pos, verbose)
+    elif pts.ndim == 3:
+        frame_cnt = pts.shape[0]
+        interpolated_pts = np.zeros_like(pts)
+        for frame_idx in range(frame_cnt):
+            interpolated_pts[frame_idx] = polar_interpolate_single_frame(pts[frame_idx], frame_idx, 
+                                                                         non_missing_mask[frame_idx] if non_missing_mask is not None else None, 
+                                                                         center_pos, verbose)
+        return interpolated_pts
+    else:
+        raise ValueError(f'pts.ndim must be 2 or 3, but got {pts.ndim}')
+    
+def polar_interpolate_single_frame(curr_frame_pts, frame_idx=None, non_missing_mask=None, center_pos=None, verbose=True):
     
     if non_missing_mask is None:
         non_missing_mask = ~(curr_frame_pts == 0).all(axis=1)
@@ -152,7 +166,7 @@ def eval_avg_flow_interpolation(pts, window_size=2, reorder=True, verbose=False)
             
     return interpolation_err
 
-def avg_flow_interpolate(all_frame_pts, frame_idx=None, window_size=2, center_pos=None, verbose=True):
+def avg_flow_interpolate(all_frame_pts, frame_idx=None, window_size=2, center_pos=None, non_missing_mask=None, align=False, verbose=True):
     """
     Interpolate the points in all_frame_pts using the average displacement method.
 
@@ -166,15 +180,15 @@ def avg_flow_interpolate(all_frame_pts, frame_idx=None, window_size=2, center_po
         np.ndarray: The interpolated points at frame_idx. Shape: (pt_cnt, 2).
     """
     if frame_idx is not None:
-        return avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=window_size, center_pos=center_pos, verbose=verbose)
+        return avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=window_size, center_pos=center_pos, non_missing_mask=non_missing_mask, align=align, verbose=verbose)
     else:
         frame_cnt = all_frame_pts.shape[0]
         interpolated_pts = np.zeros_like(all_frame_pts)
         for frame_idx in range(frame_cnt):
-            interpolated_pts[frame_idx] = avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=window_size, center_pos=center_pos, verbose=verbose)
+            interpolated_pts[frame_idx] = avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=window_size, center_pos=center_pos, non_missing_mask=non_missing_mask, align=align, verbose=verbose)
         return interpolated_pts
     
-def avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=2, center_pos=None, verbose=True):
+def avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=2, center_pos=None, non_missing_mask=None, align=False, verbose=True):
     if center_pos is None:
         center_pos = all_frame_pts.mean(axis=0)
     if frame_idx < window_size:
@@ -184,9 +198,14 @@ def avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=2, c
     curr_frame_pts = all_frame_pts[frame_idx]
     prev_frame_pts = all_frame_pts[frame_idx - 1]
     avg_flow_vecs = (all_frame_pts[frame_idx - 1] - all_frame_pts[frame_idx - window_size]) / (window_size - 1)
-    # print(f'avg_flow_vecs: {np.round(avg_flow_vecs, 2)}')
-    non_missing_mask = ~(curr_frame_pts == 0).all(axis=1)
-    first_non_missing_idx = np.where(non_missing_mask)[0][0]
+    if non_missing_mask is None:
+        non_missing_mask = ~(curr_frame_pts == 0).all(axis=1)
+        first_non_missing_idx = np.where(non_missing_mask)[0][0]
+    else:
+        if non_missing_mask.ndim == 2:
+            non_missing_mask = non_missing_mask[frame_idx]
+        first_non_missing_idx = np.where(non_missing_mask)[0]
+    
     curr_frame_pts = np.roll(curr_frame_pts, -first_non_missing_idx, axis=0)
     prev_frame_pts = np.roll(prev_frame_pts, -first_non_missing_idx, axis=0)
     non_missing_mask = np.roll(non_missing_mask, -first_non_missing_idx, axis=0)
@@ -204,7 +223,6 @@ def avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=2, c
         else:
             denom = pt_cnt - (prev_idx - next_idx)
         weight = ((pt_idx - prev_idx) % pt_cnt) / denom
-        # print(f'prev flow vec: {np.round(avg_flow_vecs[prev_idx], 2)}, next flow vec: {np.round(avg_flow_vecs[next_idx], 2)}, weight: {weight}')
         avg_flow = avg_flow_vecs[prev_idx] * weight + avg_flow_vecs[next_idx] * (1 - weight)
         curr_frame_pts[pt_idx] = prev_frame_pts[pt_idx] + avg_flow
     
