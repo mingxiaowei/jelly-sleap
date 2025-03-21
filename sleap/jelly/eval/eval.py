@@ -10,6 +10,8 @@ from python.animation import *
 from python.postprocess import *
 from python.polygon_based_correction import *
 from tensorflow.keras import backend as K
+
+
 def get_2_nn(point_idx, frame_points):
     distances = np.linalg.norm(frame_points - frame_points[point_idx], axis=1)
     sorted_indices = np.argsort(distances)
@@ -466,4 +468,229 @@ def plot_poly_err(pred_pts, id_missing_mask=None, gt_pts=None):
     all_interp_err = np.linalg.norm(all_interp_err, axis=1)
     plt.hist(all_interp_err.flatten(), bins=100)
     plt.show()
+    print(f'mean: {np.mean(all_interp_err)}, std: {np.std(all_interp_err)}, max: {np.max(all_interp_err)}')
+
+def get_tb_colors(n_colors=17, shuffle=True):
+    if shuffle:
+        colors = ['aqua', 'yellow', 'dodgerblue', 'greenyellow', 'gold',
+                  'red', 'magenta', 'darkorange', 'deepskyblue', 'limegreen',
+                  'mediumslateblue', 'deeppink', 'orangered', 'darkviolet', 'mediumspringgreen',
+                  'blue', 'aquamarine']
+    else:
+        colors = ['red', 'orangered', 'darkorange', 'gold', 'yellow', 
+              'greenyellow', 'limegreen', 'mediumspringgreen', 'aquamarine', 'aqua', 
+              'deepskyblue', 'dodgerblue', 'blue', 'mediumslateblue', 'darkviolet', 
+              'magenta', 'deeppink']
+    if n_colors > len(colors):
+        colors = colors * (n_colors // len(colors))
+        colors = colors + colors[:n_colors % len(colors)]
+    return colors[:n_colors]
+
+
+def visualize_color_palette(colors=None):
+    if colors is None:
+        colors = get_tb_colors()
+    
+    # Create a figure with a black background
+    plt.figure(figsize=(15, 3))
+    plt.rcParams['figure.facecolor'] = 'black'
+    
+    # Plot each color as a rectangle
+    for i, color in enumerate(colors):
+        plt.bar(i, 1, color=color, width=1)
+        plt.text(i, -0.1, f'{i+1}', color='white', ha='center')
+    
+    # Customize the plot
+    plt.xlim(-0.5, len(colors) - 0.5)
+    plt.ylim(-0.2, 1.1)
+    plt.axis('off')
+    plt.title('Color Palette', color='white', pad=20)
+    
+    plt.show()
+
+def animate_tb(
+        pts_lst: List[np.ndarray],
+        label_lst: list=None,
+        x: int = 170,
+        y: int = 174,
+        fps: int = 50,
+        bg_video: Union[sleap.Video, np.array] = None,
+        bg_video_start_idx: int = 1,
+        tb_colors: list = None,
+        output_path: str = None,
+        subplot_shape: tuple = (1, 1),
+    ) -> animation.FuncAnimation:
+    x_plot, y_plot = subplot_shape
+    n_plots = x_plot * y_plot
+    n_pts = len(pts_lst)
+    assert n_pts <= n_plots, f'pts_lst length ({n_pts}) must be no more than n_plots ({n_plots})'
+    
+    for i in range(n_plots):
+        pts_lst[i] = pts_lst[i][bg_video_start_idx:, :, :2]
+    
+    frame_cnt, pt_cnt = pts_lst[0].shape[:2]
+    if tb_colors is None:
+        tb_colors = get_tb_colors(pt_cnt)
+
+    fig, axes = plt.subplots(x_plot, y_plot, figsize=(y/20*y_plot, x/20*x_plot))  # Scale figure size to match dimensions
+    fig.patch.set_facecolor('white')
+    if n_plots == 1:
+        axes = [axes]
+    else:
+        axes = axes.flatten()
+        for ax in axes[n_pts:]:
+            ax.axis('off')
+        axes = axes[:n_pts]
+    vid_max_val = 255 if isinstance(bg_video, sleap.Video) else 1
+    
+    tb_scats_lst = []
+    bg_imgs_lst = []
+    frame_texts_lst = []
+    for ax in axes:
+        ax.set_xlim(0, x)
+        ax.set_ylim(0, y)
+        ax.invert_yaxis()
+    
+        tb_scats = [ax.scatter([], [], c=c, s=30) for c in tb_colors]
+        bg_img = ax.imshow(np.ones((y, x)), cmap='gray', vmin=0, vmax=vid_max_val)
+        
+        # Initialize empty text annotations
+        frame_texts = []
+        for _ in range(pt_cnt):  # number of points per frame
+            txt = ax.text(0, 0, '', fontsize=10, color='blue')
+            frame_texts.append(txt)
+
+        tb_scats_lst.append(tb_scats)
+        bg_imgs_lst.append(bg_img)
+        frame_texts_lst.append(frame_texts)
+    
+    if label_lst is not None:
+        assert len(label_lst) == n_plots, f'label_lst must have the same length as pts_lst, got {len(label_lst)} and {n_plots}'
+        for label, ax in zip(label_lst, axes):
+            ax.set_title(label)
+
+    def init():
+        plot_elements = []
+        for tb_scats, bg_img, frame_texts in zip(tb_scats_lst, bg_imgs_lst, frame_texts_lst):
+            for scat in tb_scats:
+                scat.set_offsets(np.zeros((0, 2)))
+            for txt in frame_texts:
+                txt.set_position((0, 0))
+                txt.set_text('')
+            plot_elements.extend([bg_img] + tb_scats + frame_texts)
+        return plot_elements
+
+    def animate(frame):
+        plot_elements = []
+        if bg_video is not None:
+            if isinstance(bg_video, sleap.Video):
+                bg_frame = bg_video.get_frame(frame + bg_video_start_idx)[:, :, 0]
+            else:
+                bg_frame = bg_video[frame + bg_video_start_idx]
+            for bg_img in bg_imgs_lst:
+                bg_img.set_array(bg_frame)
+    
+        for pt, tb_scats, frame_texts in zip(pts_lst, tb_scats_lst, frame_texts_lst):
+            for i, (scat, pt, txt) in enumerate(zip(tb_scats, pt[frame], frame_texts)):
+                scat.set_offsets(pt)
+                txt.set_position(pt + 2)
+                txt.set_text(f'{i+1}')
+            plot_elements.extend(tb_scats + frame_texts)
+            
+        return plot_elements
+    
+    plt.tight_layout()
+
+    # Create animation
+    anim = animation.FuncAnimation(fig, animate, init_func=init, 
+                                 frames=frame_cnt, interval=50, blit=True)
+
+    # Optional: save animation
+    if output_path is not None:
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
+        anim.save(output_path, writer='ffmpeg', fps=fps)
+        print(f"Animation saved to {output_path}")
+        
+    plt.tight_layout()
+    return anim
+
+def get_gt_pts(corrected_dataset_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_no_scores_corrected.slp'):
+    corrected_dataset = sleap.load_file(corrected_dataset_path)
+    return get_all_untracked_points(corrected_dataset, interpolate=False, use_labeled_only=True)
+
+def compare_err_over_time(err_per_frame_lst, label_lst):
+    for err_per_frame, label in zip(err_per_frame_lst, label_lst):  
+        plt.plot(err_per_frame, label=label)
+    plt.title('Average per-frame Error over time')
+    plt.xlabel('Time (frame)')
+    plt.ylabel('Error (pixel)')
+    plt.legend()
+    plt.show()
+    
+def compare_err_distribution(err_lst, label_lst):
+    
+    for err, label in zip(err_lst, label_lst):
+        mean = np.mean(err)
+        std = np.std(err)
+        max_val = np.max(err)
+        stats_text = f' (mean: {mean:.2f}, std: {std:.2f}, max: {max_val:.2f})'
+        sns.kdeplot(err.flatten(), label=label + stats_text)
+        
+    plt.title('Error distribution')
+    plt.xlabel('Error (pixel)')
+    plt.ylabel('Density')
+    plt.legend()
+    plt.xlim(0, 10)
+    plt.show()
+    
+
+def compare_nn_err(pred_pts_lst, label_lst, id_missing_mask=None, gt_pts=None, use_non_overlap_nn=False,):
+    # if id_missing_mask is None, calculate error for all points
+    if gt_pts is None:
+        gt_pts = get_gt_pts()
+    frame_cnt, pt_cnt = pred_pts_lst[0].shape[:2]
+    all_err_lst = []
+    all_err_per_frame_lst = []
+    
+    for pred_pts in pred_pts_lst:
+        all_err = []
+        all_err_per_frame = np.zeros(frame_cnt)
+        for frame_idx in range(frame_cnt):
+            curr_pts = gt_pts[frame_idx]
+            if use_non_overlap_nn:
+                curr_pts = curr_pts.copy()
+                
+            for pt_idx in range(pt_cnt):
+                if id_missing_mask is None or id_missing_mask[frame_idx, pt_idx] == 1:  
+                    all_dists = np.linalg.norm(pred_pts[frame_idx, pt_idx] - curr_pts, axis=1)
+                    min_dist_idx = np.argmin(all_dists)
+                    min_dist = all_dists[min_dist_idx]
+                    all_err.append(min_dist)
+                    all_err_per_frame[frame_idx] += min_dist
+                    if use_non_overlap_nn:
+                        curr_pts = np.delete(curr_pts, min_dist_idx, axis=0)
+        all_err_lst.append(all_err)
+        all_err_per_frame_lst.append(all_err_per_frame / pt_cnt)
+        
+    all_err_lst = np.array(all_err_lst)
+    compare_err_over_time(all_err_per_frame_lst, label_lst)
+    compare_err_distribution(all_err_lst, label_lst)
+    print(f'mean: {np.mean(all_err)}, std: {np.std(all_err)}, max: {np.max(all_err)}')
+
+def compare_poly_err(pred_pts, label_lst, id_missing_mask=None, gt_pts=None, manual_align=False, manual_align_idx=0, plot_time_seris=False):
+    if gt_pts is None:
+        gt_pts = get_gt_pts()
+    if manual_align:
+        id_mapping = align_pts_order(pred_pts, gt_pts, frame_idx=manual_align_idx)
+        pred_pts = pred_pts[:, id_mapping]
+    all_interp_err = pred_pts - gt_pts
+    if id_missing_mask is not None:
+        all_interp_err = all_interp_err[id_missing_mask > 0]
+    all_interp_err = np.linalg.norm(all_interp_err, axis=2)
+    print(all_interp_err.shape)
+    if plot_time_seris:
+        all_interp_err_per_frame = all_interp_err.mean(axis=1)
+        compare_err_over_time(all_interp_err_per_frame, label_lst)
+    compare_err_distribution(all_interp_err, label_lst)
     print(f'mean: {np.mean(all_interp_err)}, std: {np.std(all_interp_err)}, max: {np.max(all_interp_err)}')

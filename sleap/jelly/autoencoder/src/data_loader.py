@@ -5,7 +5,7 @@ import tensorflow as tf
 video_path = "/home/mingxiao/Desktop/jellyfish/video/video_1_clips/c1_high_res_5min_track_reencoded_0.mp4"
 # corrected_points_path = '/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/multifish_animal_1_v10_predicted_points.npy'
 # raw_points_path = '/home/mingxiao/Desktop/jellyfish/label/multifish/predictions/multifish_animal_1_v10_predicted_points.npy'
-corrected_points_path = raw_points_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_pred_simplemax_pts.npy'
+corrected_points_path = raw_points_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_pred_simplemax_pts_avg_flow_interpolated.npy'
 # '/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/correction/results/pred_results_w_ids.npy'
 # '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_1m_simplemax.slp.npy'
 
