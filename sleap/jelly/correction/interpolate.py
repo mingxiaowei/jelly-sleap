@@ -6,6 +6,23 @@ sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/python')
 from polygon_based_correction import poly_4
 
 
+def get_missing_count(pts):
+    is_2d = pts.ndim == 2
+    if is_2d:
+        pts = pts[np.newaxis, :, :]
+    frame_cnt, pt_cnt = pts.shape[:2]
+    pts = pts[:, :, :2]
+    missing_cnt = np.zeros((frame_cnt, pt_cnt), dtype=int)
+    for frame_idx in range(frame_cnt):
+        for pt_idx in range(pt_cnt):
+            # if pts[frame_idx, pt_idx, :].sum() == 0 or np.isnan(pts[frame_idx, pt_idx, :]).any():
+            if np.isnan(pts[frame_idx, pt_idx, :]).any() or np.isclose(pts[frame_idx, pt_idx, :], 0, atol=1e-2).any():
+                missing_cnt[frame_idx, pt_idx] = 1
+    if is_2d:
+        return missing_cnt[0]
+    else:
+        return missing_cnt
+
 def cart2pol(xy_arr, center_pos=(0, 0)):
     xy_arr = xy_arr - center_pos
     x = xy_arr[:, 0]
@@ -38,7 +55,11 @@ def polar_interpolate(pts, frame_idx=None, non_missing_mask=None, center_pos=Non
 def polar_interpolate_single_frame(curr_frame_pts, frame_idx=None, non_missing_mask=None, center_pos=None, verbose=True):
     
     if non_missing_mask is None:
-        non_missing_mask = ~(curr_frame_pts == 0).all(axis=1)
+        non_missing_mask = get_missing_count(curr_frame_pts) == 0
+    
+    missing_count = (~non_missing_mask).sum()
+    if missing_count > 0:
+        print(f'missing count = {missing_count} at frame {frame_idx}')
     
     first_non_missing_idx = np.where(non_missing_mask)[0][0]
     curr_frame_pts = np.roll(curr_frame_pts, -first_non_missing_idx, axis=0)
@@ -199,12 +220,17 @@ def avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=2, c
     prev_frame_pts = all_frame_pts[frame_idx - 1]
     avg_flow_vecs = (all_frame_pts[frame_idx - 1] - all_frame_pts[frame_idx - window_size]) / (window_size - 1)
     if non_missing_mask is None:
-        non_missing_mask = ~(curr_frame_pts == 0).all(axis=1)
+        non_missing_mask = get_missing_count(curr_frame_pts) == 0
         first_non_missing_idx = np.where(non_missing_mask)[0][0]
+        non_missing_mask = non_missing_mask[frame_idx]
     else:
         if non_missing_mask.ndim == 2:
             non_missing_mask = non_missing_mask[frame_idx]
         first_non_missing_idx = np.where(non_missing_mask)[0]
+    
+    missing_count = (~non_missing_mask).sum()
+    if missing_count > 0:
+        print(f'missing count = {missing_count} at frame {frame_idx}')
     
     curr_frame_pts = np.roll(curr_frame_pts, -first_non_missing_idx, axis=0)
     prev_frame_pts = np.roll(prev_frame_pts, -first_non_missing_idx, axis=0)

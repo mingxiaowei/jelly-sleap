@@ -298,7 +298,8 @@ def get_missing_count(pts):
     missing_cnt = np.zeros((frame_cnt, pt_cnt), dtype=int)
     for frame_idx in range(frame_cnt):
         for pt_idx in range(pt_cnt):
-            if pts[frame_idx, pt_idx, :].sum() == 0 or np.isnan(pts[frame_idx, pt_idx, :]).any():
+            # if pts[frame_idx, pt_idx, :].sum() == 0 or np.isnan(pts[frame_idx, pt_idx, :]).any():
+            if np.isnan(pts[frame_idx, pt_idx, :]).any() or np.isclose(pts[frame_idx, pt_idx, :], 0, atol=1e-2).any():
                 missing_cnt[frame_idx, pt_idx] = 1
     return missing_cnt
 
@@ -534,6 +535,8 @@ def animate_tb(
 
     fig, axes = plt.subplots(x_plot, y_plot, figsize=(y/20*y_plot, x/20*x_plot))  # Scale figure size to match dimensions
     fig.patch.set_facecolor('white')
+    fig.subplots_adjust(top=0.9)
+    
     if n_plots == 1:
         axes = [axes]
     else:
@@ -582,6 +585,7 @@ def animate_tb(
 
     def animate(frame):
         plot_elements = []
+        fig.suptitle(f'Frame {frame + bg_video_start_idx}')
         if bg_video is not None:
             if isinstance(bg_video, sleap.Video):
                 bg_frame = bg_video.get_frame(frame + bg_video_start_idx)[:, :, 0]
@@ -599,7 +603,7 @@ def animate_tb(
             
         return plot_elements
     
-    plt.tight_layout()
+    # plt.tight_layout()
 
     # Create animation
     anim = animation.FuncAnimation(fig, animate, init_func=init, 
@@ -694,3 +698,24 @@ def compare_poly_err(pred_pts, label_lst, id_missing_mask=None, gt_pts=None, man
         compare_err_over_time(all_interp_err_per_frame, label_lst)
     compare_err_distribution(all_interp_err, label_lst)
     print(f'mean: {np.mean(all_interp_err)}, std: {np.std(all_interp_err)}, max: {np.max(all_interp_err)}')
+
+def align_pts_order(pred_pts, gt_pts, frame_idx=0):
+    pred_pts = pred_pts[frame_idx, :, :2]
+    gt_pts = gt_pts[frame_idx, :, :2]
+    pred_pt_cnt = pred_pts.shape[0]
+    id_mapping = np.full(pred_pt_cnt, -1)
+    dist_queue = [] # (dist, pt_idx, nn_idx)
+    used_nn = []
+    for pt_idx in range(pred_pt_cnt): # prediction could have more points than gt; only matches will be used 
+        curr_pt = pred_pts[pt_idx]
+        dists = np.linalg.norm(gt_pts - curr_pt, axis=1)
+        min_dist_idx = np.argmin(dists)
+        dist_queue.append((dists[min_dist_idx], pt_idx, min_dist_idx))
+    dist_queue.sort(key=lambda x: x[0])
+    
+    for _, pt_idx, nn_idx in dist_queue:
+        if nn_idx not in used_nn:
+            used_nn.append(nn_idx)
+            id_mapping[pt_idx] = nn_idx
+    # assert np.all(id_mapping != -1), f'some points are not assigned to any gt point'
+    return id_mapping
