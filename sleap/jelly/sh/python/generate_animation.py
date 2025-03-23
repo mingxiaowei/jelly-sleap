@@ -10,7 +10,7 @@ results_dir = '/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/autoencoder/result
 existing_results = os.listdir(results_dir)
 for affix in results_affix:
     print(f'affix: {affix}')
-    denoised_coords = np.load(os.path.join(results_dir, f'prediction_{affix}.npy'))
+    denoised_coords = np.load(os.path.join(results_dir, f'prediction_{affix}_corrected.npy'))
     print(denoised_coords.shape)
     all_predicted_pointss.append(denoised_coords)
 
@@ -22,10 +22,10 @@ gt_pts = get_all_tracked_points(corrected_dataset, interpolate=False, use_labele
 vid_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/animal_1_1h_20s.mp4'
 vid = video_loader(vid_path)
 
-anim_path = '/home/mingxiao/Desktop/animation/ae_r7_m11_eval.mp4'
+anim_path = '/home/mingxiao/Desktop/animation/ae_r7_m11_eval_v2.mp4'
 pred_simplemax_pts = np.load('/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_pred_simplemax_pts_avg_flow_interpolated.npy')
 all_predicted_pts = all_predicted_pointss
-poly_order = poly_4(all_predicted_pts[0][0])
+poly_order = poly_4(pred_simplemax_pts[0])
 pred_simplemax_pts = pred_simplemax_pts[:, poly_order]
 frames = 3000
 pts_lst = [pred_simplemax_pts[:frames]] + [pp[:frames] for pp in all_predicted_pts]
