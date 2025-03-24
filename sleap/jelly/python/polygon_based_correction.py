@@ -1,7 +1,7 @@
 import numpy as np
 from python_tsp.distances import euclidean_distance_matrix
 from python_tsp.heuristics import solve_tsp_local_search
-
+from tqdm import tqdm
 import sys
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/python/')
 from postprocess import *
@@ -46,13 +46,17 @@ def polygon_correction(labels, mins_score=0.4, polygon_constructor=poly_4):
     all_tracked_points = get_all_tracked_points(labels, reorder=True, min_score=mins_score)
     return polygon_correction_with_points(all_tracked_points, polygon_constructor)
 
-def polygon_correction_with_points(all_tracked_points, polygon_constructor=poly_4, return_indices=False):
+def polygon_correction_with_points(all_tracked_points, polygon_constructor=poly_4, return_indices=False, align_first_frame=False):
     id_mapping = get_id_mapping_array(all_tracked_points)
     id_mapping = id_mapping.copy()
     frame_cnt = all_tracked_points.shape[0]
     idx_range = np.arange(all_tracked_points.shape[1])
+    
+    if align_first_frame:
+        first_frame_order = polygon_constructor(all_tracked_points[0])
+        all_tracked_points[0] = all_tracked_points[0, first_frame_order]
 
-    for frame_idx in range(1, frame_cnt):
+    for frame_idx in tqdm(range(1, frame_cnt)):
         curr_frame_pts = all_tracked_points[frame_idx]
         polygon_order = polygon_constructor(curr_frame_pts)
         prev_frame_indices = id_mapping[frame_idx-1]

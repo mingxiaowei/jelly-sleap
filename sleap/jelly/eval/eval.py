@@ -313,7 +313,8 @@ def animate_classification_results(
         bg_video: Union[sleap.Video, np.array] = None,
         bg_video_start_idx: int = 1,
         output_path: str = None,
-        text_dict: dict = None
+        text_dict: dict = None,
+        show_gt_pts: bool = True
     ) -> animation.FuncAnimation:
     if text_dict is None:
         text_dict = {0: 'FP', 1: 'TN', 2: 'FN', 3: 'TP', -1: 'nan'}
@@ -385,7 +386,7 @@ def animate_classification_results(
 
     def animate(frame):
         plot_elements = []
-        
+        fig.suptitle(f'Frame {frame}')
         # Update background
         if bg_video is not None:
             if isinstance(bg_video, sleap.Video):
@@ -405,8 +406,15 @@ def animate_classification_results(
             # gt_points_closed = np.vstack([gt_points, gt_points[0]])
             label_check = checked_label[frame]  # Get labels for current frame
             # Update scatter plots
-            pred_scat.set_offsets(pred_points)
-            gt_scat.set_offsets(gt_points)
+            
+            if show_gt_pts:
+                pred_scat.set_offsets(pred_points)
+                gt_scat.set_offsets(gt_points)
+            else:
+                correct_pred_pts = pred_points[label_check == 1]
+                incorrect_pred_pts = pred_points[label_check != 1]
+                pred_scat.set_offsets(incorrect_pred_pts)
+                gt_scat.set_offsets(correct_pred_pts)
             
             # Update text annotations
             for j, (point, is_correct) in enumerate(zip(pred_points, label_check)):

@@ -2,7 +2,7 @@ import numpy as np
 import sleap
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold, ParameterGrid
-from sklearn.metrics import make_scorer, recall_score, classification_report
+from sklearn.metrics import make_scorer, recall_score, classification_report, f1_score
 from sklearn.base import clone
 
 # from .animation import get_each_edge_length
@@ -46,6 +46,23 @@ def get_nn_dist_prev_frame(pts, max_dist=80):
                 
     return pts_prev_nn_dist
 
+def get_time_window(pts, window_size=3, flatten=True):
+    frame_cnt, pt_cnt = pts.shape[:2]
+    time_window = np.zeros((frame_cnt, pt_cnt, window_size, 2))
+    half_window_size = window_size // 2
+    for frame_idx in range(frame_cnt):
+        for pt_idx in range(pt_cnt):
+            window_indices = np.arange(frame_idx - half_window_size, frame_idx + half_window_size + 1)
+            window_indices = np.clip(window_indices, 0, frame_cnt - 1)
+            time_window[frame_idx, pt_idx] = pts[window_indices, pt_idx]
+    if flatten:
+        time_window = time_window.reshape(frame_cnt, pt_cnt, -1)
+        feat_cnt = time_window.shape[2]
+        time_window_lst = [time_window[:, :, i] for i in range(feat_cnt)]
+        return time_window_lst
+    else:
+        return time_window
+
 def get_labels(pred_pts, gt_pts, dist_thres=3):
     pred_pts = pred_pts[:, :, :2]
     assert pred_pts.shape == gt_pts.shape, f'shape mismatch: {pred_pts.shape} != {gt_pts.shape}'
@@ -76,7 +93,7 @@ def get_labels(pred_pts, gt_pts, dist_thres=3):
                 
     return labels
 
-def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=False, load_2nn_dist=True):
+def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=False, load_2nn_dist=True, use_tracked_pts=False, time_window_size=3, use_score=True):
     """
     Args:
         pred_pts (np.array): (frame_cnt, pt_cnt, 3); predicted points in contiguous frames, 
@@ -88,7 +105,8 @@ def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=F
                   4 features: prediction score, angle, 2 nn distance (current frame); nn distance (prev frame)
         labels: ((frame_cnt - 1) * pt_cnt, ); 1 = correct, 0 = incorrect 
     """
-    features, nan_mask = get_prediction_dataset(pred_pts, return_nan_mask=True, load_2nn_dist=load_2nn_dist)
+    features, nan_mask = get_prediction_dataset(pred_pts, return_nan_mask=True, load_2nn_dist=load_2nn_dist, 
+                                                use_tracked_pts=use_tracked_pts, time_window_size=time_window_size, use_score=use_score)
     labels = get_labels(pred_pts[1:, :, :2], gt_pts[1:], dist_thres)
     labels = labels[~nan_mask]
     if return_nan_mask:
@@ -96,17 +114,21 @@ def get_classification_dataset(pred_pts, gt_pts, dist_thres=3, return_nan_mask=F
     else:
         return features, labels
 
-def get_prediction_dataset(pred_pts, return_nan_mask=False, load_2nn_dist=True):
-    pred_pts_score = pred_pts[1:, :, 2]
+def get_prediction_dataset(pred_pts, return_nan_mask=False, load_2nn_dist=True, use_tracked_pts=False, time_window_size=3, use_score=True):
     pred_pts_angle = calculate_polygon_angles(pred_pts[1:, :, :2])
     pred_pts_prev_nn_dist = get_nn_dist_prev_frame(pred_pts[:, :, :2])
-    feat_cnt = 3 + load_2nn_dist
+    feat_lst = [pred_pts_angle, pred_pts_prev_nn_dist]
+    if use_score:
+        pred_pts_score = pred_pts[1:, :, 2]
+        feat_lst.append(pred_pts_score)
     if load_2nn_dist:
         pred_pts_2nn_dist = get_2nn_dist_multi_frame(pred_pts[1:, :, :2])
-        features = np.stack([pred_pts_score, pred_pts_angle, pred_pts_2nn_dist, pred_pts_prev_nn_dist], axis=2)
-    else:
-        features = np.stack([pred_pts_score, pred_pts_angle, pred_pts_prev_nn_dist], axis=2)
-    
+        feat_lst.append(pred_pts_2nn_dist)
+    if use_tracked_pts:
+        time_window_lst = get_time_window(pred_pts[1:, :, :2], window_size=time_window_size, flatten=True)
+        feat_lst.extend(time_window_lst)
+    feat_cnt = len(feat_lst)
+    features = np.stack(feat_lst, axis=2)
     nan_mask = np.isnan(features).any(axis=2)
     missing_mask = get_missing_count(pred_pts[1:, :, :2]) > 0 # 1 = missing, 0 = present
     nan_mask = np.logical_or(nan_mask, missing_mask)
@@ -170,18 +192,21 @@ def augment_pred_pts(pred_pts, augment_rate=0.5, augment_pt_range=(1, 4), noise_
     return pred_pts_augmented
 
 def load_20s_dataset(dist_thres=3, load_2nn_dist=True, scaler=None, 
-                     augment_rate=None, augment_pt_range=(1, 4), noise_mean=20, noise_std=10):
-    predicted_dataset_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_with_scores.slp'
+                     augment_rate=None, augment_pt_range=(1, 4), noise_mean=20, noise_std=10, 
+                     use_tracked_pts=False, time_window_size=3, use_score=True):
+    predicted_dataset_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_pred_simplemax.slp'
     predicted_dataset = sleap.load_file(predicted_dataset_path)
     print(predicted_dataset)
 
-    corrected_dataset_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_no_scores_corrected.slp'
+    corrected_dataset_path = '/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_corrected_with_scores_simplemax.slp'
     corrected_dataset = sleap.load_file(corrected_dataset_path)
     print(corrected_dataset)
 
-    pred_pts_with_scores = get_all_untracked_points(predicted_dataset, 
-                                                    interpolate=False, use_labeled_only=False, load_pred_score=True)
-    gt_pts = get_all_untracked_points(corrected_dataset, interpolate=False, use_labeled_only=True)
+    # pred_pts_with_scores = get_all_untracked_points(predicted_dataset, 
+    #                                                 interpolate=False, use_labeled_only=False, load_pred_score=False)
+    pred_pts_with_scores = np.load('/home/mingxiao/Desktop/jellyfish/video/video_1_clips/correction_test/a1_1h_20s_pred_simplemax_pts.npy')
+    print(pred_pts_with_scores.shape)
+    gt_pts = get_all_untracked_points(corrected_dataset, interpolate=False, use_labeled_only=False)
     
     if augment_rate is not None:
         pred_pts_with_scores[2:, :, :2] = augment_pred_pts(pred_pts_with_scores[2:, :, :2], 
@@ -190,9 +215,11 @@ def load_20s_dataset(dist_thres=3, load_2nn_dist=True, scaler=None,
                                                            noise_mean=noise_mean, 
                                                            noise_std=noise_std)
     
-    cont_features, cont_labels = get_classification_dataset(pred_pts_with_scores, gt_pts, dist_thres=dist_thres, load_2nn_dist=load_2nn_dist)
+    cont_features, cont_labels = get_classification_dataset(pred_pts_with_scores, gt_pts, dist_thres=dist_thres, load_2nn_dist=load_2nn_dist, 
+                                                            use_tracked_pts=use_tracked_pts, time_window_size=time_window_size, use_score=use_score)
     
-    feature_cnt = 3 + load_2nn_dist
+    feature_cnt = 2 + use_score + load_2nn_dist + use_tracked_pts * time_window_size * 2
+    print(f'feature count = {feature_cnt}')
     X = cont_features.reshape(-1, feature_cnt)
     y = cont_labels.flatten()
     print(X.shape, y.shape)
@@ -328,7 +355,8 @@ def grid_search_with_resampling(X_train, y_train, X_test, y_test, model, param_g
                                 minority_class=0, 
                                 resample=True,
                                 minor_to_major_ratio=0.2,
-                                dowmsample_majority_ratio=0.8):
+                                dowmsample_majority_ratio=0.8,
+                                scorer=None):
     """
     Perform grid search with resampling in each fold
     """
@@ -347,7 +375,8 @@ def grid_search_with_resampling(X_train, y_train, X_test, y_test, model, param_g
         X_train_resampled, y_train_resampled = X_train, y_train
     
     # Create scorer that focuses on minority class recall
-    scorer = make_scorer(recall_score, pos_label=minority_class)
+    if scorer is None:
+        scorer = make_scorer(recall_score, pos_label=minority_class)
     
     # For each parameter combination
     for params in ParameterGrid(param_grid):

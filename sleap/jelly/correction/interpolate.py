@@ -229,7 +229,7 @@ def avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=2, c
         first_non_missing_idx = np.where(non_missing_mask)[0]
     
     missing_count = (~non_missing_mask).sum()
-    if missing_count > 0:
+    if missing_count > 0 and verbose:
         print(f'missing count = {missing_count} at frame {frame_idx}')
     
     curr_frame_pts = np.roll(curr_frame_pts, -first_non_missing_idx, axis=0)
