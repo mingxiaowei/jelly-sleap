@@ -534,7 +534,7 @@ def animate_tb(
     n_pts = len(pts_lst)
     assert n_pts <= n_plots, f'pts_lst length ({n_pts}) must be no more than n_plots ({n_plots})'
     
-    for i in range(n_plots):
+    for i in range(n_pts):
         pts_lst[i] = pts_lst[i][bg_video_start_idx:, :, :2]
     
     frame_cnt, pt_cnt = pts_lst[0].shape[:2]
@@ -576,7 +576,7 @@ def animate_tb(
         frame_texts_lst.append(frame_texts)
     
     if label_lst is not None:
-        assert len(label_lst) == n_plots, f'label_lst must have the same length as pts_lst, got {len(label_lst)} and {n_plots}'
+        assert len(label_lst) == n_pts, f'label_lst must have the same length as pts_lst, got {len(label_lst)} and {n_pts}'
         for label, ax in zip(label_lst, axes):
             ax.set_title(label)
 
@@ -640,24 +640,29 @@ def compare_err_over_time(err_per_frame_lst, label_lst):
     plt.legend()
     plt.show()
     
-def compare_err_distribution(err_lst, label_lst):
+def compare_err_distribution(err_lst, label_lst, plot_cdf=False):
     
     for err, label in zip(err_lst, label_lst):
         mean = np.mean(err)
         std = np.std(err)
         max_val = np.max(err)
         stats_text = f' (mean: {mean:.2f}, std: {std:.2f}, max: {max_val:.2f})'
-        sns.kdeplot(err.flatten(), label=label + stats_text)
+        if plot_cdf:
+            sns.kdeplot(err.flatten(), cumulative=True, label=label + stats_text)
+        else:
+            sns.kdeplot(err.flatten(), label=label + stats_text)
+    
+    xmax = min([np.percentile(err, 98) for err in err_lst])
         
     plt.title('Error distribution')
     plt.xlabel('Error (pixel)')
     plt.ylabel('Density')
     plt.legend()
-    plt.xlim(0, 10)
+    plt.xlim(0, xmax)
     plt.show()
     
 
-def compare_nn_err(pred_pts_lst, label_lst, id_missing_mask=None, gt_pts=None, use_non_overlap_nn=False,):
+def compare_nn_err(pred_pts_lst, label_lst, id_missing_mask=None, gt_pts=None, use_non_overlap_nn=False, plot_cdf=False):
     # if id_missing_mask is None, calculate error for all points
     if gt_pts is None:
         gt_pts = get_gt_pts()
@@ -687,7 +692,7 @@ def compare_nn_err(pred_pts_lst, label_lst, id_missing_mask=None, gt_pts=None, u
         
     all_err_lst = np.array(all_err_lst)
     compare_err_over_time(all_err_per_frame_lst, label_lst)
-    compare_err_distribution(all_err_lst, label_lst)
+    compare_err_distribution(all_err_lst, label_lst, plot_cdf=plot_cdf)
     print(f'mean: {np.mean(all_err)}, std: {np.std(all_err)}, max: {np.max(all_err)}')
 
 def compare_poly_err(pred_pts, label_lst, id_missing_mask=None, gt_pts=None, manual_align=False, manual_align_idx=0, plot_time_seris=False):
