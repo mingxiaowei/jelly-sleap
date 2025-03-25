@@ -62,7 +62,7 @@ def get_all_tracked_points(label: sleap.Labels,
     for frame_idx in range(frame_cnt):
         curr_frame_missing_point_cnt = 0
         for inst_idx in range(instance_cnt):
-            if all_tracked_points[frame_idx, inst_idx].sum() == 0:
+            if (all_tracked_points[frame_idx, inst_idx] == 0).any() or np.isnan(all_tracked_points[frame_idx, inst_idx]).any():
                 curr_frame_missing_point_cnt += 1
                 if interpolate:
                     prev_frame_idx = get_prev_frame_idx(all_tracked_points, frame_idx, inst_idx)

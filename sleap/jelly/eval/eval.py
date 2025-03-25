@@ -652,7 +652,7 @@ def compare_err_distribution(err_lst, label_lst, plot_cdf=False):
         else:
             sns.kdeplot(err.flatten(), label=label + stats_text)
     
-    xmax = min([np.percentile(err, 98) for err in err_lst])
+    xmax = max([np.percentile(err, 98) for err in err_lst])
     
     title = 'Error distribution'
     if plot_cdf:
@@ -666,7 +666,7 @@ def compare_err_distribution(err_lst, label_lst, plot_cdf=False):
     
 
 def compare_nn_err(pred_pts_lst, label_lst, id_missing_mask=None, gt_pts=None, 
-                   use_non_overlap_nn=False, plot_cdf=False, plot_time_seris=True):
+                   use_non_overlap_nn=False, plot_cdf=False, plot_time_seris=True, return_err=False):
     # if id_missing_mask is None, calculate error for all points
     if gt_pts is None:
         gt_pts = get_gt_pts()
@@ -699,6 +699,9 @@ def compare_nn_err(pred_pts_lst, label_lst, id_missing_mask=None, gt_pts=None,
         compare_err_over_time(all_err_per_frame_lst, label_lst)
     compare_err_distribution(all_err_lst, label_lst, plot_cdf=plot_cdf)
     print(f'mean: {np.mean(all_err)}, std: {np.std(all_err)}, max: {np.max(all_err)}')
+    
+    if return_err:
+        return all_err_per_frame_lst, all_err_lst
 
 def compare_poly_err(pred_pts, label_lst, id_missing_mask=None, gt_pts=None, manual_align=False, manual_align_idx=0, plot_time_seris=False):
     if gt_pts is None:

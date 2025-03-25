@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from tqdm import tqdm
 
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/python')
 from polygon_based_correction import poly_4
@@ -58,7 +59,7 @@ def polar_interpolate_single_frame(curr_frame_pts, frame_idx=None, non_missing_m
         non_missing_mask = get_missing_count(curr_frame_pts) == 0
     
     missing_count = (~non_missing_mask).sum()
-    if missing_count > 0:
+    if missing_count > 0 and verbose:
         print(f'missing count = {missing_count} at frame {frame_idx}')
     
     first_non_missing_idx = np.where(non_missing_mask)[0][0]
@@ -221,12 +222,10 @@ def avg_flow_interpolate_single_frame(all_frame_pts, frame_idx, window_size=2, c
     avg_flow_vecs = (all_frame_pts[frame_idx - 1] - all_frame_pts[frame_idx - window_size]) / (window_size - 1)
     if non_missing_mask is None:
         non_missing_mask = get_missing_count(curr_frame_pts) == 0
-        first_non_missing_idx = np.where(non_missing_mask)[0][0]
+        # non_missing_mask = non_missing_mask[frame_idx]
+    elif non_missing_mask.ndim == 2:
         non_missing_mask = non_missing_mask[frame_idx]
-    else:
-        if non_missing_mask.ndim == 2:
-            non_missing_mask = non_missing_mask[frame_idx]
-        first_non_missing_idx = np.where(non_missing_mask)[0]
+    first_non_missing_idx = np.where(non_missing_mask)[0]
     
     missing_count = (~non_missing_mask).sum()
     if missing_count > 0 and verbose:
@@ -272,3 +271,25 @@ def test_single_frame_avg_flow_interpolation(gt_pts, frame_idx, window_size=2, r
     plot_pred_vs_gt_pts(interp_pts, curr_frame_pts)
     mean_err = np.linalg.norm(interp_pts - curr_frame_pts, axis=1).mean()
     print(f'mean error (pixel): {mean_err:.2f}')
+    
+def preprocess(pred_pts, thres=18):
+    pred_pts = pred_pts.copy()
+    non_missing_mask = get_missing_count(pred_pts) == 0
+    frame_cnt, pt_cnt = pred_pts.shape[:2]
+    for frame_idx in tqdm(range(1, frame_cnt)):
+        non_missing_mask_copy = non_missing_mask.copy()
+        
+        # 1. remove outliers 
+        for pt_idx in range(pt_cnt):
+            if 0 in pred_pts[frame_idx, pt_idx]:
+                continue
+            dist = np.linalg.norm(pred_pts[frame_idx, pt_idx] - pred_pts[frame_idx - 1, pt_idx])
+            if dist > thres:
+                pred_pts[frame_idx, pt_idx] = 0 # mark as missing
+                non_missing_mask_copy[frame_idx, pt_idx] = 0
+                
+        # 2. interpolate missing points 
+        interpolated_pts = avg_flow_interpolate(pred_pts, frame_idx=frame_idx, window_size=4, verbose=False, non_missing_mask=non_missing_mask_copy)
+        pred_pts[frame_idx] = interpolated_pts
+        
+    return pred_pts
