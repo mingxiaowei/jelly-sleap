@@ -166,21 +166,23 @@ def eval_dataset_from_points(tracked_points,
     return swap_cnt_lst, missing_cnt_lst,filtered_ranges
 
 def plot_error_count_over_time(swap_cnt_lst, missing_cnt_lst, plot_total=False, tb_cnt=17):
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(5, 4))
     plt.plot(swap_cnt_lst, label='Swap Count')
     plt.plot(missing_cnt_lst, label='Missing Count')
     if plot_total:
         plt.plot(swap_cnt_lst + missing_cnt_lst, label='Total Error Count')
-    plt.legend()
+    plt.legend(fontsize=12)
+    plt.title('Error Count Over Time')
     plt.xlabel('Frame Number')
     plt.ylabel('Error Count')
     plt.yticks(range(tb_cnt + 1))
     plt.show()
 
 def plot_error_count_distribution(swap_cnt_lst, missing_cnt_lst, tb_cnt=17):
+    plt.figure(figsize=(4, 4))
     plt.hist(swap_cnt_lst, label='Swap Count', bins=tb_cnt + 1)
     plt.hist(missing_cnt_lst, label='Missing Count', bins=tb_cnt + 1)
-    plt.legend()
+    plt.legend(fontsize=12)
     plt.xlabel('Error Count')
     plt.ylabel('Frame Count')
     plt.xticks(range(tb_cnt + 1))
@@ -640,7 +642,7 @@ def compare_err_over_time(err_per_frame_lst, label_lst):
     plt.legend()
     plt.show()
     
-def compare_err_distribution(err_lst, label_lst, plot_cdf=False):
+def compare_err_distribution(err_lst, label_lst, plot_cdf=False, xmax=None):
     
     for err, label in zip(err_lst, label_lst):
         mean = np.mean(err)
@@ -651,8 +653,9 @@ def compare_err_distribution(err_lst, label_lst, plot_cdf=False):
             sns.kdeplot(err.flatten(), cumulative=True, label=label + stats_text)
         else:
             sns.kdeplot(err.flatten(), label=label + stats_text)
-    
-    xmax = max([np.percentile(err, 98) for err in err_lst])
+            
+    if xmax is None:
+        xmax = max([np.percentile(err, 98) for err in err_lst])
     
     title = 'Error distribution'
     if plot_cdf:
@@ -666,7 +669,7 @@ def compare_err_distribution(err_lst, label_lst, plot_cdf=False):
     
 
 def compare_nn_err(pred_pts_lst, label_lst, id_missing_mask=None, gt_pts=None, 
-                   use_non_overlap_nn=False, plot_cdf=False, plot_time_seris=True, return_err=False):
+                   use_non_overlap_nn=False, plot_cdf=False, plot_time_seris=True, return_err=False, xmax=None):
     # if id_missing_mask is None, calculate error for all points
     if gt_pts is None:
         gt_pts = get_gt_pts()
@@ -697,7 +700,7 @@ def compare_nn_err(pred_pts_lst, label_lst, id_missing_mask=None, gt_pts=None,
     all_err_lst = np.array(all_err_lst)
     if plot_time_seris:
         compare_err_over_time(all_err_per_frame_lst, label_lst)
-    compare_err_distribution(all_err_lst, label_lst, plot_cdf=plot_cdf)
+    compare_err_distribution(all_err_lst, label_lst, plot_cdf=plot_cdf, xmax=xmax)
     print(f'mean: {np.mean(all_err)}, std: {np.std(all_err)}, max: {np.max(all_err)}')
     
     if return_err:
