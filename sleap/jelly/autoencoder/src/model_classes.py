@@ -5,7 +5,9 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, ConvLSTM2D, LSTM, \
         Dense, Flatten, concatenate, Reshape, TimeDistributed, RepeatVector, \
         MultiHeadAttention, LayerNormalization, Add, Conv2D, Conv1D, Multiply, Conv3D, Embedding
-from data_loader import load_data
+import sys
+sys.path.append('/Users/mingxiaowei/Desktop/kennedylab/turbulence/jelly-sleap/sleap/jelly/autoencoder')
+from src.data_loader import load_data
 
 class BaseModel:
     

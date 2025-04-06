@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from typing import Union, List, Callable
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/python/')
+sys.path.append('/Users/mingxiaowei/Desktop/kennedylab/turbulence/jelly-sleap/sleap/jelly/python/')
 from polygon_based_correction import poly_4
 from tqdm import tqdm
 

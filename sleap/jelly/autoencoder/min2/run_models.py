@@ -6,6 +6,7 @@ from .models import *
 import sys
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/autoencoder/src')
 sys.path.append('/home/mingxiao/Desktop/jelly-sleap/sleap/jelly/autoencoder/')
+sys.path.append('/Users/mingxiaowei/Desktop/kennedylab/turbulence/jelly-sleap/sleap/jelly/autoencoder')
 sys.path.append('..')
 from src.data_loader import load_data
 from src.model_classes import *
