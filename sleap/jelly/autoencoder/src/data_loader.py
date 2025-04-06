@@ -158,9 +158,13 @@ def load_data(
     split_size=0.9,
     roll=False,
     canvas_size=(170, 174),
+    coords_corrected=None
     ):
-    coords_raw, coords_corrected = load_points(raw_points_path=raw_points_path, 
-                                               corrected_points_path=corrected_points_path)
+    if coords_corrected is None:
+        coords_raw, coords_corrected = load_points(raw_points_path=raw_points_path, 
+                                                corrected_points_path=corrected_points_path)
+    else:
+        print(f'using provided input with shape {coords_corrected.shape}')
     pt_cnt = coords_corrected.shape[1]
     # 1. augment
     if augment:

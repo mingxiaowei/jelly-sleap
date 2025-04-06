@@ -357,9 +357,10 @@ def run_model_11(window_size=5, epochs=100, batch_size=32,
                 roll=True, 
                 model=None, 
                 latent_dim=32, 
-                flatten=True):
+                flatten=True, 
+                data_loader=load_data):
     
-    X_train, X_val, y_train, y_val, X = load_data(
+    X_train, X_val, y_train, y_val, X = data_loader(
         window_size=window_size, 
         augment=True, 
         load_video=False, 
