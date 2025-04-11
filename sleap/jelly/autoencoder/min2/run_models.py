@@ -317,9 +317,10 @@ def run_model_10(window_size=5, epochs=100, batch_size=32,
                 dropout_rate=0.01, 
                 swap_rate=0.005, 
                 roll=True, 
-                model=None):
+                model=None, 
+                data_loader=load_data):
     
-    X_train, X_val, y_train, y_val, X = load_data(
+    X_train, X_val, y_train, y_val, X = data_loader(
         window_size=window_size, 
         augment=True, 
         load_video=False, 

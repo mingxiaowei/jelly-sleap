@@ -9,7 +9,6 @@ sys.path.append('..')
 from python.animation import *
 from python.postprocess import *
 from python.polygon_based_correction import *
-from tensorflow.keras import backend as K
 
 
 def get_2_nn(point_idx, frame_points):
